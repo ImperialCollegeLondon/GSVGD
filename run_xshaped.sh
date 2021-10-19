@@ -23,16 +23,16 @@
 
 ## plot
 # for exp in xshaped_batch_full gaussian_full multimodal_batch_nmix3_full multimodal_batch_nmix4_full
-# for exp in multimodal_batch_nmix4_full gaussian_full # xshaped_batch_full multimodal_batch_nmix4_full
-#     do
-#         # taskset -c 11-16 python plots/plot_final_particles.py --exp=$exp --nparticles=500 --epochs=2000 --lr=0.1 --delta=0.1
-#         taskset -c 11-16 python plots/plot_metric_vs_epochs.py --exp=$exp --nparticles=500 --epochs=2000 --lr=0.1 --delta=0.1 --root=res_1010_final
-#         # taskset -c 11-16 python plots/plots/plot_seeds.py --exp=$exp --nparticles=500 --epochs=2000 --lr=0.1 --delta=0.1 --root=res_1010_final
-#     done
+for exp in multimodal xshaped
+    do
+        # taskset -c 11-16 python plots/plot_final_particles.py --exp=$exp --nparticles=500 --epochs=2000 --lr=0.1 --delta=0.1
+        taskset -c 11-16 python plots/plot_metric_vs_epochs.py --exp=$exp --nparticles=500 --epochs=2000 --lr=0.1 --delta=0.1
+        # taskset -c 11-16 python plots/plot_seeds.py --exp=$exp --nparticles=500 --epochs=2000 --lr=0.1 --delta=0.1 --root=res_1010_final
+    done
 
 # plot nparticles
-for exp in gaussian_nparticles
-    do
-        taskset -c 11-16 python plots/plot_nparticles.py --exp=$exp --epochs=2000 --lr=0.1 --delta=0.1 --root=res_1010_final
-        taskset -c 11-16 python plots/plot_time.py --exp=$exp --epochs=2000 --lr=0.1 --delta=0.1 --root=res_1010_final
-    done
+# for exp in gaussian_nparticles
+#     do
+#         taskset -c 11-16 python plots/plot_nparticles.py --exp=$exp --epochs=2000 --lr=0.1 --delta=0.1 --root=res_1010_final
+#         taskset -c 11-16 python plots/plot_time.py --exp=$exp --epochs=2000 --lr=0.1 --delta=0.1 --root=res_1010_final
+#     done
