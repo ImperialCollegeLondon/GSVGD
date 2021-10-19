@@ -19,6 +19,8 @@ import torch.distributions as D
 from tqdm import trange
 
 class MaxSVGD:
+  """S-SVGD class for generic problems
+  """
 
   def __init__(self, target, result_interval=1, device="cpu"):
     self.target = target
@@ -145,6 +147,8 @@ class MaxSVGD:
 
 
 class MaxSVGDLR(MaxSVGD):
+  """S-SVGD class for Bayesian LR
+  """
   def fit(
     self, 
     samples, 
