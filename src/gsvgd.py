@@ -50,12 +50,7 @@ class FullGSVGDBatch:
         # num_particles x dim
         score_X = autograd.grad(lp_X.sum(), X_cp)[0]
         score_Y = autograd.grad(lp_Y.sum(), Y_cp)[0]
-        
-        #? new kernel
-        # # # num_particles x num_particles
-        # score2 = (score @ score.T).unsqueeze(-1)
 
-        #? old kernel
         # num_particles x d 
         A_score_X = score_X @ A
         A_score_Y = score_Y @ A
@@ -77,13 +72,6 @@ class FullGSVGDBatch:
         div_K_Px = einsum('iiklm->klm', gradgrad_K_Px)
 
         # term 1
-        #? new kernel
-        # m x num_particles x num_particles
-        # score_prod = A_score_r_X.permute(1, 0, 2) @ A_score_r_Y.permute(1, 2, 0)
-        # prod = score_prod @ K_AXAY.permute(2, 0, 1) # m x num_particles x num_particles
-        # term1 = prod.sum()
-        
-        #? old kernel
         prod = einsum("imk, jmk, ijm -> ijm", A_score_r_X, A_score_r_Y, K_AXAY)
         term1 = prod.sum()
 
@@ -92,11 +80,8 @@ class FullGSVGDBatch:
 
         # term 3 (NOT equal to term 2 for a general kernel!)
         term3 = einsum("kmj, jikm -> ikm", A_score_r_Y, grad_first_K_Px).sum()
-        # term3 = term2
-        # assert torch.isclose(term2, term3), ("term2 and term3 should be equal", term2, term3)
 
         # term 4
-        ## compute grad_grad_K directly in matrix form
         term4 = div_K_Px.sum()
 
         return (term1 + term2 + term3 + term4) / num_particles**2
@@ -118,7 +103,6 @@ class FullGSVGDBatch:
         X = X.detach()
         assert X.requires_grad is False, "X needs to be detached"
         
-        # TODO check later whether need detach
         AX = X @ A
         AXr = AX.reshape((num_particles, m, M)).detach()
         assert AXr.requires_grad is False, "AXr needs to be detached"
@@ -138,39 +122,23 @@ class FullGSVGDBatch:
         K_AxAx = self.k(AXr, AYr)
         K_AxAx_trasp = K_AxAx.permute(2, 0, 1)
         # proj_dim x num_particles x num_particles x batch
-        # -> batch x num_particles x num_particles x proj_dim
-        # -> batch x num_particles x proj_dim
-        #! the old code has -1, but I think it should not be there
         grad_first_K_Ax = self.k.grad_first(AXr, AYr)
+        # batch x num_particles x num_particles x proj_dim
         grad_first_K_Ax = torch.transpose(grad_first_K_Ax, dim0=0, dim1=3)
-        # print(grad_first_K_Ax.shape)
+        # batch x num_particles x proj_dim
         sum_grad_first_K_Ax = torch.sum(grad_first_K_Ax, dim=1)
-        # print(grad_first_K_Ax.shape)
 
         # compute phi
         A_r = A.reshape((dim, m, M)) # dim x batch x proj_dim
         A_r = torch.transpose(A_r, dim0=0, dim1=1) # batch x dim x proj_dim
 
-        #? new kernel
-        # # batch x num_particles x dim
-        # phi = (
-        #     torch.einsum(
-        #         "bij, bjk -> bik",
-        #         K_AxAx_trasp.detach(),
-        #         score_func.unsqueeze(0)
-        #     )
-        #     + torch.einsum(
-        #         "bij, bkj -> bik", sum_grad_first_K_Ax, A_r
-        #     )
-        # ) / num_particles
-
-        #? old kernel
         A_score = score_func @ A # num_particles x (proj_dim x m)
         # num_particles x batch x proj_dim
         A_score_r = A_score.reshape((num_particles, m, M))
         # batch x num_particles x dim
         AT_A_score_r = einsum("bij, kbj -> bki", A_r, A_score_r)
 
+        # compute GSVGD update rule
         attraction = torch.einsum(
             "bjk, bji -> bik",
             AT_A_score_r,
@@ -202,7 +170,7 @@ class FullGSVGDBatch:
             grad_A_r = grad_A.reshape((dim, m, M)).permute(1, 0, 2) # batch x dim x proj_dim
             A_r = A.reshape((dim, m, M)).permute(1, 0, 2) # batch x dim x proj_dim
 
-            #? Riemannian update
+            # Riemannian update
             A_r = self.manifold.retr(
                 A_r.clone(),
                 self.manifold.egrad2rgrad(
@@ -211,25 +179,9 @@ class FullGSVGDBatch:
                     + np.sqrt(2.0 * self.T * self.delta)
                     * A_r_noise.squeeze(-1),
                 ),
-            )
+            ) # batch x dim x proj_dim
 
-            #? Riemannian update with Adagrad
-            # A_r, self.proj_optim = AdaGrad_update(
-            #     A_r, 
-            #     self.manifold.egrad2rgrad(
-            #         A_r.clone(),
-            #         self.delta * grad_A_r.clone(),
-            #     ), 
-            #     self.delta, 
-            #     self.proj_optim
-            # )
-            # A_r = self.manifold.retr(
-            #     A_r.clone(),
-            #     torch.zeros_like(A_r, device=self.device)
-            # )
-
-            # A = A_r.permute(1, 0, 2).reshape(A.shape) # dim x (m x proj_dim)
-            A = torch.cat([A_r[b, :, :] for b in range(m)], dim=1).to(X.device)
+            A = torch.cat([A_r[b, :, :] for b in range(m)], dim=1).to(X.device) # dim x (dim * proj_dim)
 
         return A, alpha
 
@@ -243,7 +195,6 @@ class FullGSVGDBatch:
         # dim x dim
         X_alpha_cp = X.clone().detach()
         A = A.detach().requires_grad_()
-        # A.grad = None
         A, alpha = self.update_projection(X_alpha_cp, A, dim, m, M, **kwargs)
 
         A = A.detach().requires_grad_()
@@ -256,9 +207,6 @@ class FullGSVGDBatch:
         self.optim.zero_grad()
         X.grad = -einsum("bij -> ij", phi)
         self.optim.step()
-        #? Adagrad update
-        # self.optim.zero_grad()
-        # X, self.adagrad_state_dict = AdaGrad_update(X, einsum("bij -> ij", phi), self.lr, self.adagrad_state_dict)
 
         return A, phi, repulsion, score, K_AxAx
 
@@ -291,21 +239,10 @@ class FullGSVGDBatch:
             'beta2': 0.99
         }
 
-        #? Adagrad update
-        # dim = X.shape[1]
-        # M = int(A.shape[1]/m)
-        # self.proj_optim = {
-        #     'M': torch.zeros((m, dim, M), device=self.device),
-        #     'V': torch.zeros((m, dim, M), device=self.device),
-        #     't': 1,
-        #     'beta1': 0.9,
-        #     'beta2': 0.99
-        # }
-
         for i in iterator:
             A, phi, repulsion, score, K_AxAx = self.step(X=X, A=A.detach().requires_grad_(), m=m, **kwargs)
 
-            # This is slow, so we only do it once every XXX timesteps (or maybe not at all?)
+            ## This is slow, so we only do it once every 1000 timesteps
             if ((i+1) % 1000) == 0:
                 A, _ = torch.qr(A)
 
@@ -319,11 +256,12 @@ class FullGSVGDBatch:
             pamrf = pert_rf_norm.mean().item()
 
             pam_diff = np.abs(pam - pam_old)
+            ## annealing for temperature param T
             if pam_diff < threshold and self.T < 1e6:
                 self.T *= 10
-                # print(f"Increase T to {self.T} at iteration {i+1} as delta PAM {pam_diff} is less than {threshold}")
             pam_old = pam
 
+            ## save results
             if (i+1) % save_every==0:
                 self.U_list[1 + i//save_every] = A.clone().detach()
                 self.particles[1 + i//save_every] = X.clone().detach().cpu()
@@ -356,7 +294,6 @@ class FullGSVGDBatchLR(FullGSVGDBatch):
         X_valid, y_valid = valid_data
         X_test, y_test = test_data
 
-        # iterator = tqdm(range(epochs)) if verbose else range(epochs)
         iterator = trange(epochs) if verbose else range(epochs)
 
         for i in iterator:
@@ -364,23 +301,24 @@ class FullGSVGDBatchLR(FullGSVGDBatch):
                 A, phi, repulsion, score, K_AxAx = self.step(X=X, A=A.detach().requires_grad_(), m=m, 
                     X_batch=X_batch, y_batch=y_batch)
 
-                # orthogonalize projections
+                ## This is slow, so we only do it once every 1000 timesteps
                 if (j+1) % 1000 == 0:
                     A, _ = torch.qr(A)
 
+                ## PAM and annealling variance multiplier
                 perturbation = torch.sum(phi.detach().clone(), dim=0)
                 pert_norm = torch.max(perturbation.abs(), dim=1)[0]
                 pam = pert_norm.mean().item()
 
                 pam_diff = np.abs(pam - pam_old)
+                ## annealing for temperature param T
                 if pam_diff < threshold and self.T < 1e6:
                     self.T *= 10
-                    # print(f"Increase T to {self.T} at iteration {i+1} as delta PAM {pam_diff} is less than {threshold}")
                 pam_old = pam
 
+                ## save results
                 train_step = i * len(train_loader) + j
                 if train_step % save_every == 0:
-                # if i % save_every == 0:
                     self.particles.append((i, X.clone().detach()))
                     _, _, test_acc, test_ll = self.target.evaluation(X.clone().detach(), X_test, y_test)
                     valid_prob, _, valid_acc, valid_ll = self.target.evaluation(X.clone().detach(), X_valid, y_valid)
@@ -388,7 +326,6 @@ class FullGSVGDBatchLR(FullGSVGDBatch):
                     self.valid_accuracy.append((train_step, valid_acc, valid_ll))
 
                     if train_step % 100 == 0:
-                        # print(f"Epoch {i} batch {j} accuracy: {valid_acc} ll: {valid_ll}")
                         iterator.set_description(f"Epoch {i} batch {j} accuracy: {valid_acc} ll: {valid_ll}")
 
         return A, self.metrics
