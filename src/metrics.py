@@ -78,15 +78,6 @@ def mmd_rbf(X, Y, sigma=1):
 def energy_dist(X, Y):
     '''MMD with RBF kernel
     '''
-    # XX = X.matmul(X.t())
-    # XY = X.matmul(Y.t())
-    # YY = Y.matmul(Y.t())
-
-    # # abs because of numerical instability
-    # K_XY2 = (-2 * XY + XX.diag().unsqueeze(1) + YY.diag().unsqueeze(0)).abs().sqrt()
-    # K_XX = (-2 * XX + XX.diag().unsqueeze(1) + XX.diag().unsqueeze(0)).abs().sqrt()
-    # K_YY = (-2 * YY + YY.diag().unsqueeze(1) + YY.diag().unsqueeze(0)).abs().sqrt()
-
     K_XY = torch.cdist(X, Y)**2
     K_XX = torch.cdist(X, X.clone())**2
     K_YY = torch.cdist(Y, Y.clone())**2
@@ -203,7 +194,6 @@ class Metric:
             true_samples = self.target_dist.sample((100000, ))
             def metric_fn(y):
                 ground_truth = torch.cos(self.w*true_samples + self.b).mean(axis=0)
-                #print("ground truth:", ground_truth)
                 cos_y = torch.cos(self.w*y + self.b).mean(axis=0)
                 return ((cos_y - ground_truth)**2).mean().item()
             self.metric_fn = metric_fn
@@ -213,7 +203,6 @@ class Metric:
             true_samples = self.target_dist.sample((100000, ))
             true_samples = true_samples - true_samples.mean(axis=0)
             ground_truth = (true_samples.t() @ true_samples) / true_samples.shape[0]
-            #print("ground truth:", ground_truth)
             def metric_fn(y):
                 y = y - y.mean(axis=0)
                 est_cov = y.t() @ y / y.shape[0]
