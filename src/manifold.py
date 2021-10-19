@@ -1,3 +1,7 @@
+"""
+Adapted from the Pymanopt library:
+    https://www.pymanopt.org/
+"""
 import torch
 import abc
 import functools
@@ -16,11 +20,6 @@ def multiprod(A, B):
     if len(A.shape) == 2:
         return A @ B
 
-    # Old (slower) implementation:
-    # a = A.reshape(np.hstack([np.shape(A), [1]]))
-    # b = B.reshape(np.hstack([[np.shape(B)[0]], [1], np.shape(B)[1:]]))
-    # return np.sum(a * b, axis=2)
-
     # Approx 5x faster, only supported by numpy version >= 1.6:
     return torch.einsum("ijk,ikl->ijl", A, B)
 
@@ -36,7 +35,6 @@ def multitransp(A):
     # First check if we have been given just one matrix
     if A.ndim == 2:
         return A.T
-    # return torch.transpose(A, (0, 2, 1))
     return torch.transpose(A, 2, 1)
 
 
@@ -284,19 +282,14 @@ class Grassmann(Manifold):
         return PXehess - HXtG
 
     def retr(self, X, G):
-        # Calculate 'thin' qr decomposition of X + G
-        # XNew, r = np.linalg.qr(X + G)
-
         # We do not need to worry about flipping signs of columns here,
         # since only the column space is important, not the actual
         # columns. Compare this with the Stiefel manifold.
 
         # Compute the polar factorization of Y = X+G
-        # q, r = torch.qr(X + G)
-        # return torch.matmul(q, torch.diag_embed(torch.sign(torch.sign(torch.diagonal(r, dim1=1, dim2=2)) + 0.5)))
+        # Calculate 'thin' SVD of X + G
         u, s, vt = torch.linalg.svd(X + G, full_matrices=False)
         return multiprod(u, vt)
-        # return torch.matmul(q, torch.diag(torch.sign(torch.sign(torch.diag(r)) + 0.5)))
 
 
     def norm(self, X, G):
