@@ -11,7 +11,6 @@ import random
 import torch
 from tqdm import tqdm, trange
 from src.Sliced_KSD_Clean.Util import *
-from src.Sliced_KSD_Clean.Divergence.Network import *
 from src.Sliced_KSD_Clean.Divergence.Def_Divergence import *
 from src.Sliced_KSD_Clean.Divergence.Kernel import *
 from src.Sliced_KSD_Clean.Divergence.Dataloader import *

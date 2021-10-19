@@ -12,7 +12,7 @@ sys.path.append(".")
 from src.svgd import SVGD
 # from src.full_gsvgd_seq import FullGSVGD
 from src.gsvgd import FullGSVGDBatch
-from src.kernel import RBF, IMQ, SumKernel, BatchRBF
+from src.kernel import RBF, BatchRBF
 from src.metrics import Metric
 from src.manifold import Grassmann
 from src.maxsvgd import MaxSVGD

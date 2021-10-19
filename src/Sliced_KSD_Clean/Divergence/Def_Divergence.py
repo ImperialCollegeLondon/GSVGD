@@ -2,7 +2,6 @@
 import torch
 import autograd.numpy as np
 from src.Sliced_KSD_Clean.Util import *
-from src.Sliced_KSD_Clean.Divergence.Network import *
 import math
 
 

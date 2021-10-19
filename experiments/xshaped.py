@@ -17,7 +17,7 @@ print(torch.cuda.device_count())
 
 from src.svgd import SVGD
 from src.gsvgd import FullGSVGDBatch
-from src.kernel import RBF, IMQ, SumKernel, BatchRBF
+from src.kernel import RBF, BatchRBF
 from src.utils import plot_particles, plot_metrics, plot_particles_hist
 from src.metrics import Metric
 from src.manifold import Grassmann

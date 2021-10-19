@@ -2,7 +2,6 @@ import torch
 import numpy as np
 from matplotlib import pyplot as plt
 from src.Sliced_KSD_Clean.Util import *
-from src.Sliced_KSD_Clean.Divergence.Network import *
 def SE_kernel(sample1,sample2,**kwargs):
     # RBF kernel for projected samples (used for SKSD, S-SVGD)
     '''

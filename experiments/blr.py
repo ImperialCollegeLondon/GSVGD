@@ -14,7 +14,7 @@ sys.path.append(".")
 from src.svgd import SVGDLR
 # from src.full_gsvgd_seq import FullGSVGDLR
 from src.gsvgd import FullGSVGDBatchLR
-from src.kernel import RBF, IMQ, SumKernel, BatchRBF
+from src.kernel import RBF, BatchRBF
 from src.utils import plot_particles
 from src.metrics import Metric
 from src.manifold import Grassmann
