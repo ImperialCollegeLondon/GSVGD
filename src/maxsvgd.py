@@ -40,9 +40,6 @@ class MaxSVGD:
   ):
 
     g = torch.eye(samples.shape[-1], device=self.device).requires_grad_(True)
-    # g = torch.nn.init.orthogonal_(
-    #   torch.empty(samples.shape[-1], samples.shape[-1], device=self.device)
-    # ).requires_grad_(True)
 
     self.metrics = [-1000] * (n_epoch//save_every)
     self.particles = [-1000] * (1 + n_epoch//save_every)
@@ -80,19 +77,6 @@ class MaxSVGD:
     counter_not_opt=0
     for ep in tqdm(range(int(n_epoch))):
 
-      # if get_distance(samples_pre_fix,samples)>np.sqrt(samples.shape[1])*0.15:
-      #     # the change between samples are large enough, so S-SVGD not coverged, we update g direction
-      #     flag_opt=True
-      #     samples_pre_fix=samples.clone().detach()
-      #     counter_not_opt=0
-      # else:
-      #     # accumulate the epochs that the changes between samples are small.
-      #     counter_not_opt+=1
-      #     # accumulate 40 epochs, we update g.
-      #     if counter_not_opt%40==0:
-      #         flag_opt=True
-      #     else:
-      #         flag_opt=False
       flag_opt = True   # remove hack
 
       # Update g direction
@@ -134,26 +118,12 @@ class MaxSVGD:
         repulsive_max, _ = torch.max(repulsive, dim=1)
 
         # particle-averaged magnitude (batch x num_particles)
-        # pam = torch.linalg.norm(maxSVGD_force.detach(), dim=1).mean().item()
         pam = torch.max(maxSVGD_force.abs().detach(), dim=1)[0].mean().item()
         pamrf = torch.max(repulsive.abs().detach(), dim=1)[0].mean().item()
         # update particles
         samples, mixSVGD_state_dict = SVGD_AdaGrad_update(samples, maxSVGD_force, eps, mixSVGD_state_dict)
         samples = samples.clone().requires_grad_()
 
-        # if (ep) % self.result_interval == 0:
-        #     Record results
-        #     samples_np = samples.cpu().data.numpy()  # N x dim
-        #     samples_cov = samples.var(0).cpu().data.numpy().mean()  # np.var(samples_np, axis=0).mean()
-        #     Variance_comp[counter_record] = samples_cov
-        #     repulsive_comp[counter_record] = repulsive_max.mean().cpu().data.numpy()
-        #     mean_comp[counter_record] = samples.mean(0).mean(-1).cpu().data.numpy()
-
-        #     if (ep) % (50 * self.result_interval) == 0:
-        #         print('ep:%s var:%s rep:%s' % (
-        #         ep, samples_cov, repulsive_max.mean().cpu().data.numpy()))
-        #     counter_record += 1
-          
       if (ep+1)%save_every==0:
           # self.metrics[ep//save_every] = metric(samples.detach())
           self.particles[1 + ep//save_every] = samples.clone().detach().cpu()
@@ -168,10 +138,6 @@ class MaxSVGD:
           _, _, acc = self.target.evaluation(samples.clone().detach(), X_test, y_test)
           print(f"Epoch {ep} batch {ep} accuracy:", acc)
 
-      # early stop
-      if pam < threshold:
-        print(f"GSVGD converged in {ep+1} epochs as PAM {pam} is less than {threshold}")
-        break  
     return samples, self.metrics
 
 
@@ -207,9 +173,6 @@ class MaxSVGDLR(MaxSVGD):
     counter_record = 0
 
     g = torch.eye(samples.shape[-1], device=self.device).requires_grad_(True)
-    # g = torch.nn.init.orthogonal_(
-    #   torch.empty(samples.shape[-1], samples.shape[-1], device=self.device)
-    # ).requires_grad_(True)
     r = torch.eye(samples.shape[-1], device=self.device)
 
     Adam_g = torch.optim.Adam([g], lr=lr,betas=(0.5,0.9))
@@ -233,7 +196,6 @@ class MaxSVGDLR(MaxSVGD):
     counter_not_opt=0
 
     pbar = trange(int(n_epoch))
-    # for ep in tqdm(range(int(n_epoch))):
     for ep in pbar:
       for j, (X_batch, y_batch) in enumerate(train_loader):
   
@@ -250,7 +212,6 @@ class MaxSVGDLR(MaxSVGD):
               # compute target score
               log_like1 = self.target.log_prob(samples1, X_batch, y_batch)
               score1 = torch.autograd.grad(log_like1.sum(), samples1)[0]
-              #! this is using a lot of CPU!
               diver, divergence = compute_max_DSSD_eff(samples1.detach(), samples1.clone().detach(), None, SE_kernel,
                                           d_kernel=d_SE_kernel,
                                           dd_kernel=dd_SE_kernel,
@@ -278,7 +239,6 @@ class MaxSVGDLR(MaxSVGD):
           repulsive_max, _ = torch.max(repulsive, dim=1)
 
           # particle-averaged magnitude (batch x num_particles)
-          # pam = torch.linalg.norm(maxSVGD_force.detach(), dim=1).mean().item()
           pam = torch.max(maxSVGD_force.detach().abs(), dim=1)[0].mean().item()
           # update particles
           samples, mixSVGD_state_dict = SVGD_AdaGrad_update(samples, maxSVGD_force, eps, mixSVGD_state_dict)
@@ -297,7 +257,6 @@ class MaxSVGDLR(MaxSVGD):
               pbar.set_description(f"Epoch {ep} batch {j} accuracy: {valid_acc} ll: {valid_ll}")
 
       if metric and (ep+1)%save_every==0:
-          # self.metrics[ep//save_every] = metric(samples.detach())
           self.particles[1 + ep//save_every] = samples.clone().detach().cpu()
           self.pam[ep//save_every] = pam
       
