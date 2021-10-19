@@ -1,5 +1,5 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "4,5,6,7"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,2,4,5,6,7"
 import sys
 sys.path.append(".")
 import matplotlib.pyplot as plt 
@@ -76,7 +76,7 @@ if __name__ == "__main__":
       eff_dims = res["effdims"]
       epochs = res["epochs"]
 
-      target, svgd, maxsvgd = res["target"], res["svgd"], res["maxsvgd"]
+      target, svgd, s_svgd = res["target"], res["svgd"], res["s_svgd"]
       gsvgd = {s: res[s] for s in [f"gsvgd_effdim{d}" for d in eff_dims]}
       # save last particles in list
       dim = svgd[-1].shape[1]
@@ -90,7 +90,7 @@ if __name__ == "__main__":
       particles_dic = {
         "epochs": epochs,
         "SVGD": svgd,
-        "S-SVGD": maxsvgd,
+        "S-SVGD": s_svgd,
         **{f"GSVGD{d}": [x.cpu() for x in gsvgd[f"gsvgd_effdim{d}"]] for d in eff_dims},
         "target": target.cpu()
       }
@@ -101,14 +101,14 @@ if __name__ == "__main__":
         epochs = epochs[1:]
         metric_dict = {
           "SVGD": res[met]["svgd"],
-          "S-SVGD": res[met]["maxsvgd"],
+          "S-SVGD": res[met]["s_svgd"],
           **{f"GSVGD{d}": [x for x in res[met][f"gsvgd_effdim{d}"]] for d in eff_dims}
         }
 
       elif met == "pam_diff":
         epochs = epochs[2:]
         svgd_metrics = res["pam"]["svgd"]
-        maxsvgd_metrics = res["pam"]["maxsvgd"]
+        s_svgd_metrics = res["pam"]["s_svgd"]
         gsvgd_metrics = {}
         for d in eff_dims:
           l = res["pam"][f"gsvgd_effdim{d}"]
@@ -117,7 +117,7 @@ if __name__ == "__main__":
 
         metric_dict = {
           "SVGD": [abs(svgd_metrics[i] - svgd_metrics[i-1]) / (svgd_metrics[i-1] + 1e-16) for i in range(1, len(svgd_metrics))],
-          "S-SVGD": [abs(maxsvgd_metrics[i] - svgd_metrics[i-1]) / (maxsvgd_metrics[i-1] + 1e-16) for i in range(1, len(maxsvgd_metrics))],
+          "S-SVGD": [abs(s_svgd_metrics[i] - svgd_metrics[i-1]) / (s_svgd_metrics[i-1] + 1e-16) for i in range(1, len(s_svgd_metrics))],
           **gsvgd_metrics
         }
 
@@ -140,13 +140,13 @@ if __name__ == "__main__":
             target_dist=target_dist, device=device)
         
         svgd_metrics = [metric_fn(x.to(device)) for x in svgd]
-        maxsvgd_metrics = [metric_fn(x.to(device)) for x in maxsvgd]
+        s_svgd_metrics = [metric_fn(x.to(device)) for x in s_svgd]
         gsvgd_metrics = [[metric_fn(x.to(device)) for x in gsvgd[s]] for s in gsvgd.keys()]
 
         # compute metric
         metric_dict = {
           "SVGD": svgd_metrics,
-          "S-SVGD": maxsvgd_metrics,
+          "S-SVGD": s_svgd_metrics,
           **{f"GSVGD{d}": [metric_fn(x.to(device)) for x in gsvgd[f"gsvgd_effdim{d}"]] for d in eff_dims}
         }
 
@@ -201,10 +201,10 @@ if __name__ == "__main__":
     #   plt.fill_between(data=sub_metrics_df, x="epochs", y1="lower", y2="upper", alpha=0.2)
 
     g.set_yscale("log")
-    plt.xlabel("Iterations", fontsize=30)
-    plt.xticks(fontsize=22)
-    plt.ylabel(metrics_ylabs[met], fontsize=30)
-    plt.yticks(fontsize=26)
+    plt.xlabel("Iterations", fontsize=38)
+    plt.xticks(fontsize=27)
+    plt.ylabel(metrics_ylabs[met], fontsize=38)
+    plt.yticks(fontsize=27)
     # plt.legend(fontsize=25, markerscale=2.5, bbox_to_anchor=(1.01, 0.8), loc='upper left')
     plt.legend(fontsize=25, markerscale=2.5, loc='center right')
     fig.tight_layout()

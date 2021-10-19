@@ -62,7 +62,7 @@ if __name__ == "__main__":
         res = pickle.load(open(f"{path}/particles.p", "rb"))
         eff_dims = res["effdims"]
         epochs = res["epochs"]
-        target, svgd, maxsvgd = res["target"], res["svgd"], res["maxsvgd"]
+        target, svgd, s_svgd = res["target"], res["svgd"], res["s_svgd"]
         gsvgd = {s: res[s] for s in [f"gsvgd_effdim{d}" for d in eff_dims]}
 
         target_dist = torch.load(f'{path}/target_dist.p', map_location=device)
@@ -79,14 +79,14 @@ if __name__ == "__main__":
       
         # compute metric for the final iteration
         svgd_metrics = [metric_fn(x.to(device)) for x in svgd[-1:]]
-        maxsvgd_metrics = [metric_fn(x.to(device)) for x in maxsvgd[-1:]]
+        s_svgd_metrics = [metric_fn(x.to(device)) for x in s_svgd[-1:]]
         # gsvgd_metrics = [[metric_fn(x.to(device)) for x in gsvgd[s]][-1:] for s in gsvgd.keys()]
         gsvgd_metrics = {
           f"GSVGD{d}": [metric_fn(x.to(device)) for x in gsvgd[f"gsvgd_effdim{d}"]][-1:] for d in eff_dims}
         
         metric_dict = {
           "SVGD": svgd_metrics,
-          "S-SVGD": maxsvgd_metrics,
+          "S-SVGD": s_svgd_metrics,
           **gsvgd_metrics
         }
         

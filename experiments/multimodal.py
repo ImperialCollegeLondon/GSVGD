@@ -17,7 +17,7 @@ from src.kernel import RBF, BatchRBF
 from src.utils import plot_particles
 from src.metrics import Metric
 from src.manifold import Grassmann
-from src.maxsvgd import MaxSVGD
+from src.s_svgd import SlicedSVGD
 
 import pickle
 import argparse
@@ -204,26 +204,26 @@ if __name__ == "__main__":
     ## S-SVGD
     if args.method in ["S-SVGD", "all"]:
         # sample from variational density
-        print("Running maxSVGD")
-        x_init_maxsvgd = x_init.clone()
-        x_maxsvgd = x_init_maxsvgd.clone().requires_grad_()
-        maxsvgd = MaxSVGD(distribution, device=device)
+        print("Running S-SVGD")
+        x_init_s_svgd = x_init.clone()
+        x_s_svgd = x_init_s_svgd.clone().requires_grad_()
+        s_svgd = SlicedSVGD(distribution, device=device)
 
         start = time.time()
-        x_maxsvgd, metric_maxsvgd = maxsvgd.fit(
-            samples=x_maxsvgd, 
+        x_s_svgd, metric_s_svgd = s_svgd.fit(
+            samples=x_s_svgd, 
             n_epoch=epochs, 
             lr=args.lr_g,
             eps=lr,
             metric=metric_fn,
             save_every=save_every
         )
-        elapsed_time_maxsvgd = time.time() - start
+        elapsed_time_s_svgd = time.time() - start
 
         # plot particles
-        fig_maxsvgd = plot_particles(
-            x_init_maxsvgd.detach(), 
-            x_maxsvgd.detach(), 
+        fig_s_svgd = plot_particles(
+            x_init_s_svgd.detach(), 
+            x_s_svgd.detach(), 
             distribution, 
             d=9.0, 
             step=0.1, 
@@ -237,12 +237,12 @@ if __name__ == "__main__":
     # pam = {
     #     **{"svgd": svgd.pam},
     #     **{f"gsvgd_effdim{d}": r["pam"] for d, r in zip(eff_dims, res_gsvgd)},
-    #     **{"maxsvgd": maxsvgd.pam},
+    #     **{"s_svgd": s_svgd.pam},
     # }
     # pamrf = {
     #     **{"svgd": svgd.pamrf},
     #     **{f"gsvgd_effdim{d}": r["pamrf"] for d, r in zip(eff_dims, res_gsvgd)},
-    #     **{"maxsvgd": maxsvgd.pamrf},
+    #     **{"s_svgd": s_svgd.pamrf},
     # }
     # alpha_tup = {
     #     **{f"gsvgd_effdim{d}": r["alpha_tup"] for d, r in zip(eff_dims, res_gsvgd)}
@@ -252,7 +252,7 @@ if __name__ == "__main__":
     elapsed_time = {
         **{"svgd": elapsed_time_svgd},
         **{f"gsvgd_effdim{d}": r["elapsed_time"] for d, r in zip(eff_dims, res_gsvgd)},
-        **{"maxsvgd": elapsed_time_maxsvgd},
+        **{"s_svgd": elapsed_time_s_svgd},
     }
 
     # particles
@@ -269,10 +269,10 @@ if __name__ == "__main__":
             # **{f"repulsion_gsvgd_effdim{d}": r["res"].repulsion_list for d, r in zip(eff_dims, res_gsvgd)},
             # **{f"score_gsvgd_effdim{d}": r["res"].score_list for d, r in zip(eff_dims, res_gsvgd)},
             # **{f"k_gsvgd_effdim{d}": r["res"].k_list for d, r in zip(eff_dims, res_gsvgd)},
-            **{"maxsvgd": maxsvgd.particles},
-            # **{"proj_maxsvgd": maxsvgd.g},
-            # **{"phi_maxsvgd": maxsvgd.phi_list},
-            # **{"repulsion_maxsvgd": maxsvgd.repulsion_list},
+            **{"s_svgd": s_svgd.particles},
+            # **{"proj_s_svgd": s_svgd.g},
+            # **{"phi_s_svgd": s_svgd.phi_list},
+            # **{"repulsion_s_svgd": s_svgd.repulsion_list},
             # **{"pam": pam},
             # **{"pamrf": pamrf},
             # **{"alpha_tup": alpha_tup}
@@ -293,7 +293,7 @@ if __name__ == "__main__":
     # plotting metrics
     del svgd
     del res_gsvgd
-    del maxsvgd
+    del s_svgd
     sh = f"python plots/plot_metric_vs_epochs.py --exp=multimodal{args.suffix} --nparticles={nparticles} --epochs={epochs} --lr={lr} --delta={delta} --dim={dim}"
     os.system(sh)
 

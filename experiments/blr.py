@@ -18,7 +18,7 @@ from src.kernel import RBF, BatchRBF
 from src.utils import plot_particles
 from src.metrics import Metric
 from src.manifold import Grassmann
-from src.maxsvgd import MaxSVGDLR
+from src.s_svgd import SlicedSVGDLR
 from src.blr import BayesianLR
 from torch.utils.data import DataLoader, TensorDataset
 import pickle
@@ -278,13 +278,13 @@ if __name__ == "__main__":
     elif args.method == "s-svgd":
         ## S-SVGD
         # sample from variational density
-        print("Running maxSVGD")
-        x_maxsvgd = theta0.clone().requires_grad_()
-        maxsvgd = MaxSVGDLR(distribution, device=device)
+        print("Running S-SVGD")
+        x_s_svgd = theta0.clone().requires_grad_()
+        s_svgd = SlicedSVGDLR(distribution, device=device)
 
         start = time.time()
-        x_maxsvgd, metric_maxsvgd = maxsvgd.fit(
-            samples=x_maxsvgd, 
+        x_s_svgd, metric_s_svgd = s_svgd.fit(
+            samples=x_s_svgd, 
             n_epoch=epochs, 
             lr=lr_g,
             eps=lr,
@@ -295,7 +295,7 @@ if __name__ == "__main__":
         )
         elapsed_time = time.time() - start
 
-        fitted_method = maxsvgd
+        fitted_method = s_svgd
         method_name = f"s-svgd_lrg{lr_g}"
 
     # elif args.method == "hmc":

@@ -165,11 +165,11 @@ def colorFader(c1="blue", c2="orange", mix=0):
     return mpl.colors.to_hex((1-mix)*c1 + mix*c2)
 
 
-def plot_metrics(epochs, metric_svgd, metric_gsvgd, eff_dims, metric_maxsvgd, name, savefile, 
+def plot_metrics(epochs, metric_svgd, metric_gsvgd, eff_dims, metric_s_svgd, name, savefile, 
     figsize=(8, 6), alpha=1, xlab="iterations", ylog=False, markersize=6):
     fig = plt.figure(figsize=figsize)
     plt.plot(epochs, metric_svgd, color="r", label="SVGD", alpha=alpha, marker="o", markersize=markersize)
-    plt.plot(epochs, metric_maxsvgd, color="g", label="S-SVGD", linestyle="dashed", alpha=alpha, marker="s", markersize=markersize)
+    plt.plot(epochs, metric_s_svgd, color="g", label="S-SVGD", linestyle="dashed", alpha=alpha, marker="s", markersize=markersize)
     gsvgd_markers = [">", "^", "*", "D"]
     for i in range(metric_gsvgd.shape[1]):
         plt.plot(

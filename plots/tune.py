@@ -49,7 +49,7 @@ if __name__ == "__main__":
   print(f"Computing metric {met}")
   svgd_ls = []
   gsvgd_ls = []
-  maxsvgd_ls = []
+  s_svgd_ls = []
   dims_ls = []
   metric_fn_ls = []
 
@@ -63,13 +63,13 @@ if __name__ == "__main__":
       res = pickle.load(open(f"{path}/particles.p", "rb"))
       #target_dist = res["target_dist"]
       eff_dims = res["effdims"]
-      target, svgd, maxsvgd = res["target"], res["svgd"], res["maxsvgd"]
+      target, svgd, s_svgd = res["target"], res["svgd"], res["s_svgd"]
       gsvgd = {s: res[s] for s in [f"gsvgd_effdim{d}" for d in eff_dims]}
       # get final particles 
       dim = svgd[-1].shape[1]
       dims_ls.append(dim)
       svgd_final = svgd[-1].to(device)
-      maxsvgd_final = maxsvgd[-1].to(device)
+      s_svgd_final = s_svgd[-1].to(device)
       gsvgd_keys = list(gsvgd.keys())
       gsvgd_final = {s: gsvgd[s][-1].to(device) for s in gsvgd_keys}
 
@@ -92,7 +92,7 @@ if __name__ == "__main__":
       method_names = ["svgd", "ssvgd"] + gsvgd_keys
       metric_vals = {
         **{"svgd": metric_fn(svgd_final)},
-        **{"ssvgd": metric_fn(maxsvgd_final)},
+        **{"ssvgd": metric_fn(s_svgd_final)},
         **{s: metric_fn(gsvgd_final[s]) for s in gsvgd_keys}
       }
       new_df = pd.DataFrame(
@@ -142,13 +142,13 @@ if __name__ == "__main__":
   #       res = pickle.load(open(f"{path}/particles.p", "rb"))
   #       #target_dist = res["target_dist"]
   #       eff_dims = res["effdims"]
-  #       target, svgd, maxsvgd = res["target"], res["svgd"], res["maxsvgd"]
+  #       target, svgd, s_svgd = res["target"], res["svgd"], res["s_svgd"]
   #       gsvgd = {s: res[s] for s in [f"gsvgd_effdim{d}" for d in eff_dims]}
   #       # get final particles 
   #       dim = svgd[-1].shape[1]
   #       dims_ls.append(dim)
   #       svgd_final = svgd[-1].to(device)
-  #       maxsvgd_final = maxsvgd[-1].to(device)
+  #       s_svgd_final = s_svgd[-1].to(device)
   #       gsvgd_keys = list(gsvgd.keys())
   #       gsvgd_final = {s: gsvgd[s][-1].to(device) for s in gsvgd_keys}
 
@@ -169,7 +169,7 @@ if __name__ == "__main__":
   #       method_names = ["svgd", "ssvgd"] + gsvgd_keys
   #       metric_vals = {
   #         **{"svgd": metric_fn(svgd_final)},
-  #         **{"ssvgd": metric_fn(maxsvgd_final)},
+  #         **{"ssvgd": metric_fn(s_svgd_final)},
   #         **{s: metric_fn(gsvgd_final[s]) for s in gsvgd_keys}
   #       }
   #       new_df = pd.DataFrame(

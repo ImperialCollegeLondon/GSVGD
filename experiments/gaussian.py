@@ -18,7 +18,7 @@ from src.kernel import RBF, BatchRBF
 from src.utils import plot_particles, plot_metrics, plot_particles_hist
 from src.metrics import Metric
 from src.manifold import Grassmann
-from src.maxsvgd import MaxSVGD
+from src.s_svgd import SlicedSVGD
 
 import pickle
 import argparse
@@ -172,28 +172,28 @@ if __name__ == "__main__":
     res_gsvgd = run_gsvgd(eff_dims)
 
 
-    ## MaxSVGD
-    print("Running maxSVGD")
+    ## S-SVGD
+    print("Running S-SVGD")
     # sample from variational density
-    x_init_maxsvgd = x_init.clone()
-    x_maxsvgd = x_init_maxsvgd.clone().requires_grad_()
-    maxsvgd = MaxSVGD(distribution, device=device)
+    x_init_s_svgd = x_init.clone()
+    x_s_svgd = x_init_s_svgd.clone().requires_grad_()
+    s_svgd = SlicedSVGD(distribution, device=device)
 
     start = time.time()
-    x_maxsvgd, metric_maxsvgd = maxsvgd.fit(
-        samples=x_maxsvgd, 
+    x_s_svgd, metric_s_svgd = s_svgd.fit(
+        samples=x_s_svgd, 
         n_epoch=epochs, 
         lr=args.lr_g,
         eps=lr,
         metric=metric_fn,
         save_every=save_every
     )
-    elapsed_time_maxsvgd = time.time() - start
+    elapsed_time_s_svgd = time.time() - start
 
     # plot particles
-    fig_maxsvgd = plot_particles(
-        x_init_maxsvgd.detach(), 
-        x_maxsvgd.detach(), 
+    fig_s_svgd = plot_particles(
+        x_init_s_svgd.detach(), 
+        x_s_svgd.detach(), 
         distribution, 
         d=6.0, 
         step=0.1, 
@@ -207,7 +207,7 @@ if __name__ == "__main__":
     elapsed_time = {
         **{"svgd": elapsed_time_svgd},
         **{f"gsvgd_effdim{d}": r["elapsed_time"] for d, r in zip(eff_dims, res_gsvgd)},
-        **{"maxsvgd": elapsed_time_maxsvgd},
+        **{"s_svgd": elapsed_time_s_svgd},
     }
 
     # particles
@@ -219,7 +219,7 @@ if __name__ == "__main__":
             **{"target": x_target.cpu()},
             **{"svgd": svgd.particles},
             **{f"gsvgd_effdim{d}": r["particles"] for d, r in zip(eff_dims, res_gsvgd)},
-            **{"maxsvgd": maxsvgd.particles},
+            **{"s_svgd": s_svgd.particles},
             **{"elapsed_time": elapsed_time}
         },
         open(results_folder + "/particles.p", "wb")

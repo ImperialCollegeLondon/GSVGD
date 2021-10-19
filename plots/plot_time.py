@@ -1,5 +1,5 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1,3,4,5,6,7"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,2,3,4,5,6,7"
 import sys
 sys.path.append(".")
 import matplotlib.pyplot as plt 
@@ -43,74 +43,76 @@ if __name__ == "__main__":
 
   print(f"Plotting time")
 
-  df_list = []
-  for dim in dims:
-    print("loading dim =", dim)
-    for nparticles in nparticles_ls:
-      resdir = f"rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim{dim}"
-      path = f"{resdir}/seed0"
+  for dir_prefix in [basedir, basedir + "20proj"]:
+    df_list = []
+    for dim in dims:
+      print("loading dim =", dim)
+      for nparticles in nparticles_ls:
+        resdir = f"rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim{dim}"
+        path = f"{resdir}/seed0"
 
-      path = f"{basedir}/{path}"
+        path = f"{basedir}/{path}"
 
-      # load results
-      res = pickle.load(open(f"{path}/particles.p", "rb"))
-      eff_dims = res["effdims"]
-      epochs = res["epochs"]
-      time = res["elapsed_time"]
-      svgd, maxsvgd = time["svgd"], time["maxsvgd"]
-      gsvgd = {f"GSVGD{d}": time[f"gsvgd_effdim{d}"] for d in eff_dims}
-    
-      time_dict = {
-        "SVGD": svgd,
-        "S-SVGD": maxsvgd,
-        **gsvgd
-      }
+        # load results
+        res = pickle.load(open(f"{path}/particles.p", "rb"))
+        eff_dims = res["effdims"]
+        epochs = res["epochs"]
+        time = res["elapsed_time"]
+        svgd, s_svgd = time["svgd"], time["s_svgd"]
+        gsvgd = {f"GSVGD{d}": time[f"gsvgd_effdim{d}"] for d in eff_dims}
       
-      method_names = ["SVGD"] + [f"GSVGD{d}" for d in eff_dims] + ["S-SVGD"]
-      for method in method_names:
-        df_new = pd.DataFrame(
-          {
-            "Time": time_dict[method],
-            "Method": [f"{method}-{nparticles}"],
-            "N": [nparticles],
-            "dim": [dim]
-          }
-        )
-        df_list.append(df_new)
+        time_dict = {
+          "SVGD": svgd,
+          "S-SVGD": s_svgd,
+          **gsvgd
+        }
+        
+        method_names = ["SVGD"] + [f"GSVGD{d}" for d in eff_dims] + ["S-SVGD"]
+        for method in method_names:
+          df_new = pd.DataFrame(
+            {
+              "Time": time_dict[method],
+              "Method": [f"{method}-{nparticles}"],
+              "N": [nparticles],
+              "dim": [dim]
+            }
+          )
+          df_list.append(df_new)
+      
+    metrics_df_orig = pd.concat(df_list)
+    plot_methods = [f"SVGD-{n}" for n in nparticles_ls] + \
+        [f"S-SVGD-{n}" for n in nparticles_ls] + \
+        [f"GSVGD1-{n}" for n in nparticles_ls]
+    metrics_df = metrics_df_orig.loc[metrics_df_orig.Method.isin(plot_methods), :]
+
+    svgd_colors = sns.color_palette("Greens")[2:len(nparticles_ls)+2]
+    ssvgd_colors = sns.color_palette("light:b")[2:len(nparticles_ls)+2]
+    gsvgd_colors = sns.color_palette("dark:salmon_r")[:len(nparticles_ls)]
+    palatte = svgd_colors + ssvgd_colors + gsvgd_colors
+    # palatte = ssvgd_colors + gsvgd_colors
+
+    fig = plt.figure(figsize=(12, 6))
+    g = sns.lineplot(
+      data=metrics_df, 
+      x="dim", 
+      y="Time",
+      hue="Method", 
+      style="Method",
+      markers=True,
+      markersize=10,
+      palette=palatte,
+      hue_order=plot_methods
+    )
+    g.set_yscale("log")
+    plt.xlabel("Dimension", fontsize=30)
+    plt.xticks(fontsize=25)
+    plt.ylabel("Time", fontsize=30)
+    plt.yticks(fontsize=25)
+    plt.ylim(0, 1000)
+    plt.legend(fontsize=18, markerscale=2, bbox_to_anchor=(1, 0.5), loc='center left')
+    fig.tight_layout()
+    fig.savefig(f"{save_dir}/time.png")
+    fig.savefig(f"{save_dir}/time.pdf")
     
-  metrics_df_orig = pd.concat(df_list)
-  plot_methods = [f"SVGD-{n}" for n in nparticles_ls] + \
-      [f"S-SVGD-{n}" for n in nparticles_ls] + \
-      [f"GSVGD1-{n}" for n in nparticles_ls]
-  metrics_df = metrics_df_orig.loc[metrics_df_orig.Method.isin(plot_methods), :]
-
-  svgd_colors = sns.color_palette("Greens")[2:len(nparticles_ls)+2]
-  ssvgd_colors = sns.color_palette("light:b")[2:len(nparticles_ls)+2]
-  gsvgd_colors = sns.color_palette("dark:salmon_r")[:len(nparticles_ls)]
-  palatte = svgd_colors + ssvgd_colors + gsvgd_colors
-  # palatte = ssvgd_colors + gsvgd_colors
-
-  fig = plt.figure(figsize=(12, 6))
-  g = sns.lineplot(
-    data=metrics_df, 
-    x="dim", 
-    y="Time",
-    hue="Method", 
-    style="Method",
-    markers=True,
-    markersize=10,
-    palette=palatte,
-    hue_order=plot_methods
-  )
-  # g.set_yscale("log")
-  plt.xlabel("Dimension", fontsize=25)
-  plt.xticks(fontsize=20)
-  plt.ylabel("Time", fontsize=25)
-  plt.yticks(fontsize=20)
-  plt.legend(fontsize=18, markerscale=2, bbox_to_anchor=(1, 0.5), loc='center left')
-  fig.tight_layout()
-  fig.savefig(f"{save_dir}/time.png")
-  fig.savefig(f"{save_dir}/time.pdf")
-  
   
 

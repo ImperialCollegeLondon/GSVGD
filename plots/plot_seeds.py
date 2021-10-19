@@ -81,7 +81,7 @@ if __name__ == "__main__":
     print(f"Plotting metric {met}")
     svgd_ls = []
     gsvgd_ls = []
-    maxsvgd_ls = []
+    s_svgd_ls = []
     metric_fn_ls = []
     df_list = []
 
@@ -93,7 +93,7 @@ if __name__ == "__main__":
         # load results
         res = pickle.load(open(f"{path}/particles.p", "rb"))
         eff_dims = res["effdims"]
-        target, svgd, maxsvgd = res["target"], res["svgd"], res["maxsvgd"]
+        target, svgd, s_svgd = res["target"], res["svgd"], res["s_svgd"]
         gsvgd = {s: res[s] for s in [f"gsvgd_effdim{d}" for d in eff_dims]}
 
         # save last particles in list
@@ -119,7 +119,7 @@ if __name__ == "__main__":
         plot_ind = -1
         particles = {
           "SVGD": svgd[plot_ind].to(device),
-          "S-SVGD": maxsvgd[plot_ind].to(device),
+          "S-SVGD": s_svgd[plot_ind].to(device),
           **{f"GSVGD{d} (ours)": gsvgd[f"gsvgd_effdim{d}"][plot_ind].to(device) for d in eff_dims}
         }
 

@@ -54,7 +54,7 @@ if __name__ == "__main__":
     res = pickle.load(open(f"{path}/particles.p", "rb"))
     #target_dist = res["target_dist"]
     eff_dims = res["effdims"]
-    target, svgd, maxsvgd = res["target"], res["svgd"], res["maxsvgd"]
+    target, svgd, s_svgd = res["target"], res["svgd"], res["s_svgd"]
     gsvgd = {s: res[s] for s in [f"gsvgd_effdim{d}" for d in eff_dims]}
     # save last particles in list
     dim = svgd[-1].shape[1]
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     gsvgd_keys = [f"gsvgd_effdim{i}" for i in eff_dims]
     final_particles_dic = [
       ("SVGD", svgd[-1].to(device)),
-      ("S-SVGD", maxsvgd[-1].to(device))
+      ("S-SVGD", s_svgd[-1].to(device))
     ] + [(n, gsvgd[s][-1].to(device)) for n, s in zip(gsvgd_titles, gsvgd_keys)]
 
     # mean vector for padding
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     final_particles_dict = {
       "Target": target_samples,
       "SVGD": svgd[-1].cpu().numpy(),
-      "S-SVGD": maxsvgd[-1].cpu().numpy(),
+      "S-SVGD": s_svgd[-1].cpu().numpy(),
       **{n: gsvgd[s][-1].cpu().numpy() for n, s in zip(gsvgd_titles, gsvgd_keys)}
     }
 

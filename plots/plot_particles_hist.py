@@ -52,7 +52,7 @@ if __name__ == "__main__":
     #target_dist = res["target_dist"]
     eff_dims = res["effdims"]
     epochs = res['epochs']
-    target, svgd, maxsvgd = res["target"], res["svgd"], res["maxsvgd"]
+    target, svgd, s_svgd = res["target"], res["svgd"], res["s_svgd"]
     gsvgd = {s: res[s] for s in [f"gsvgd_effdim{d}" for d in eff_dims]}
     # save last particles in list
     dim = svgd[-1].shape[1]
@@ -61,13 +61,13 @@ if __name__ == "__main__":
     target_dist = torch.load(f'{path}/target_dist.p', map_location=device)
 
     svgd = [x.to(device) for x in svgd]
-    maxsvgd = [x.to(device) for x in maxsvgd]
+    s_svgd = [x.to(device) for x in s_svgd]
     gsvgd = {s: [x.to(device) for x in gsvgd[s]] for s in gsvgd.keys()}
 
     # store all results into a dict
     plot_particles = {
       **{"svgd": svgd},
-      **{"ssvgd": maxsvgd},
+      **{"ssvgd": s_svgd},
       **gsvgd,
     }
 

@@ -17,7 +17,7 @@ from src.Sliced_KSD_Clean.Divergence.Dataloader import *
 import torch.distributions as D
 from tqdm import trange
 
-class MaxSVGD:
+class SlicedSVGD:
   """S-SVGD class for generic problems
   """
 
@@ -68,7 +68,7 @@ class MaxSVGD:
                         'beta2': 0.99
                         }
     # the bandwidth is computed inside functions, so here we set it to None
-    kernel_hyper_maxSVGD = {
+    kernel_hyper_slicedSVGD = {
       'bandwidth': None
     }
     # Record the previous samples. This will be used for determining whether S-SVGD converged. If the change is not huge between samples, then we stop the g optimization, and
@@ -95,7 +95,7 @@ class MaxSVGD:
             diver, divergence = compute_max_DSSD_eff(samples1.detach(), samples1.clone().detach(), None, SE_kernel,
                                         d_kernel=d_SE_kernel,
                                         dd_kernel=dd_SE_kernel,
-                                        r=r, g=g_n, kernel_hyper=kernel_hyper_maxSVGD,
+                                        r=r, g=g_n, kernel_hyper=kernel_hyper_slicedSVGD,
                                         score_samples1=score1, score_samples2=score1.clone()
                                         , flag_median=True, flag_U=False, median_power=0.5,
                                         bandwidth_scale=band_scale
@@ -110,19 +110,19 @@ class MaxSVGD:
 
         score1 = torch.autograd.grad(log_like1.sum(), samples)[0]
 
-        maxSVGD_force, repulsive = max_DSSVGD(samples, None, SE_kernel, repulsive_SE_kernel, r=r, g=g_n,
+        slicedSVGD_force, repulsive = max_DSSVGD(samples, None, SE_kernel, repulsive_SE_kernel, r=r, g=g_n,
                                               flag_median=True, median_power=0.5,
-                                              kernel_hyper=kernel_hyper_maxSVGD, score=score1,
+                                              kernel_hyper=kernel_hyper_slicedSVGD, score=score1,
                                               bandwidth_scale=band_scale,
                                               repulsive_coef=1, flag_repulsive_output=True)
 
         repulsive_max, _ = torch.max(repulsive, dim=1)
 
         # particle-averaged magnitude (batch x num_particles)
-        pam = torch.max(maxSVGD_force.abs().detach(), dim=1)[0].mean().item()
+        pam = torch.max(slicedSVGD_force.abs().detach(), dim=1)[0].mean().item()
         pamrf = torch.max(repulsive.abs().detach(), dim=1)[0].mean().item()
         # update particles
-        samples, mixSVGD_state_dict = SVGD_AdaGrad_update(samples, maxSVGD_force, eps, mixSVGD_state_dict)
+        samples, mixSVGD_state_dict = SVGD_AdaGrad_update(samples, slicedSVGD_force, eps, mixSVGD_state_dict)
         samples = samples.clone().requires_grad_()
 
       if (ep+1)%save_every==0:
@@ -131,7 +131,7 @@ class MaxSVGD:
           self.g[1 + ep//save_every] = g_n.clone().detach().cpu()
           self.pam[ep//save_every] = pam
           self.pamrf[ep//save_every] = pamrf
-          self.phi_list[ep//save_every] = maxSVGD_force
+          self.phi_list[ep//save_every] = slicedSVGD_force
           self.repulsion_list[ep//save_every] = repulsive
 
       # evaluate test accuracy if appropriate
@@ -145,7 +145,7 @@ class MaxSVGD:
 
 
 
-class MaxSVGDLR(MaxSVGD):
+class SlicedSVGDLR(SlicedSVGD):
   """S-SVGD class for Bayesian LR
   """
   def fit(
@@ -189,7 +189,7 @@ class MaxSVGDLR(MaxSVGD):
                         'beta2': 0.99
                         }
     # the bandwidth is computed inside functions, so here we set it to None
-    kernel_hyper_maxSVGD = {
+    kernel_hyper_slicedSVGD = {
       'bandwidth': None
     }
     # Record the previous samples. This will be used for determining whether S-SVGD converged. If the change is not huge between samples, then we stop the g optimization, and
@@ -218,7 +218,7 @@ class MaxSVGDLR(MaxSVGD):
               diver, divergence = compute_max_DSSD_eff(samples1.detach(), samples1.clone().detach(), None, SE_kernel,
                                           d_kernel=d_SE_kernel,
                                           dd_kernel=dd_SE_kernel,
-                                          r=r, g=g_n, kernel_hyper=kernel_hyper_maxSVGD,
+                                          r=r, g=g_n, kernel_hyper=kernel_hyper_slicedSVGD,
                                           score_samples1=score1, score_samples2=score1.clone()
                                           , flag_median=True, flag_U=False, median_power=0.5,
                                           bandwidth_scale=band_scale
@@ -233,18 +233,18 @@ class MaxSVGDLR(MaxSVGD):
 
           score1 = torch.autograd.grad(log_like1.sum(), samples)[0]
 
-          maxSVGD_force, repulsive = max_DSSVGD(samples, None, SE_kernel, repulsive_SE_kernel, r=r, g=g_n,
+          slicedSVGD_force, repulsive = max_DSSVGD(samples, None, SE_kernel, repulsive_SE_kernel, r=r, g=g_n,
                                                 flag_median=True, median_power=0.5,
-                                                kernel_hyper=kernel_hyper_maxSVGD, score=score1,
+                                                kernel_hyper=kernel_hyper_slicedSVGD, score=score1,
                                                 bandwidth_scale=band_scale,
                                                 repulsive_coef=1, flag_repulsive_output=True)
 
           repulsive_max, _ = torch.max(repulsive, dim=1)
 
           # particle-averaged magnitude (batch x num_particles)
-          pam = torch.max(maxSVGD_force.detach().abs(), dim=1)[0].mean().item()
+          pam = torch.max(slicedSVGD_force.detach().abs(), dim=1)[0].mean().item()
           # update particles
-          samples, mixSVGD_state_dict = SVGD_AdaGrad_update(samples, maxSVGD_force, eps, mixSVGD_state_dict)
+          samples, mixSVGD_state_dict = SVGD_AdaGrad_update(samples, slicedSVGD_force, eps, mixSVGD_state_dict)
           samples = samples.clone().requires_grad_()
 
         # evaluate test accuracy if appropriate
