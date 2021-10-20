@@ -149,7 +149,7 @@ class FullGSVGDBatch:
             "bdj, bij -> bid", A_r, sum_grad_first_K_Ax
         ) / num_particles
 
-        phi = attraction + repulsion
+        phi = attraction + repulsion # batch x num_particles x dim 
 
         return phi, repulsion, AT_A_score_r, K_AxAx
 
@@ -247,8 +247,8 @@ class FullGSVGDBatch:
                 A, _ = torch.qr(A)
 
             ## PAM and annealling variance multiplier
-            perturbation = torch.sum(phi.detach().clone(), dim=0)
-            pert_norm = torch.max(perturbation.abs(), dim=1)[0]
+            perturbation = torch.sum(phi.detach().clone(), dim=0) # num_particles x dim
+            pert_norm = torch.max(perturbation.abs(), dim=1)[0] # num_particles
             pam = pert_norm.mean().item()
 
             perturbation_rf = torch.sum(repulsion.detach().clone(), dim=0)

@@ -74,8 +74,8 @@ if not os.path.exists(results_folder):
 if args.kernel == "rbf":
     Kernel = RBF
     BatchKernel = BatchRBF
-elif args.kernel == "imq":
-    Kernel = IMQ
+# elif args.kernel == "imq":
+#     Kernel = IMQ
 
 if __name__ == "__main__":
     print(f"Device: {device}")
@@ -215,7 +215,7 @@ if __name__ == "__main__":
         svgd = SVGDLR(distribution, kernel, optim.Adam([x], lr=lr), device=device)
 
         start = time.time()
-        _ = svgd.fit(x0=x, epochs=epochs, save_every=save_every, train_loader=train_loader,
+        svgd.fit(x0=x, epochs=epochs, save_every=save_every, train_loader=train_loader,
             test_data=(X_test, y_test), valid_data=(X_valid, y_valid))
         elapsed_time = time.time() - start
 
@@ -298,42 +298,6 @@ if __name__ == "__main__":
         fitted_method = s_svgd
         method_name = f"s-svgd_lrg{lr_g}"
 
-    # elif args.method == "hmc":
-    #     import pymc3 as pm
-    #     import theano as thno
-    #     import theano.tensor as T
-
-    #     def print_map(result):
-    #         return pd.Series({k: v.item() for k, v in result.items()})
-    #     def run_model(Y, X):
-    #         dim = X.shape[1]
-    #         with pm.Model() as manual_logistic_model:
-    #             alpha = pm.Gamma("alpha", alpha=a0, beta=b0)
-    #             # mean = np.zeros((dim, 1))
-    #             # mean = np.zeros(dim)
-    #             # var = 1 / alpha * np.eye(dim)
-    #             var = 1 / alpha * np.ones(dim)
-    #             w = pm.Normal("w", 0, var)
-                
-    #             # probs = pm.invlogit(X @ w)
-    #             probs = pm.invlogit(w @ X.T)
-
-    #             pm.Bernoulli(name='logit', p=probs, observed=Y)
-
-    #         with manual_logistic_model:
-    #             manual_map_estimate = pm.find_MAP()
-            
-    #         print(print_map(manual_map_estimate))
-
-    #     Y = y_train.cpu().numpy().reshape((-1,))
-    #     X = X_train.cpu().numpy()
-    #     #! change labels from {-1, 1} to {0, 1}
-    #     Y[Y == -1] = 0.
-    #     print(np.unique(Y))
-    #     print("shape of input data to NUTS:", X.shape, "\nD:", D)
-    #     particles_dict, elapsed_time = run_model(Y, X)
-
-
     elif args.method == "hmc":
         import numpyro
         from numpyro.infer import MCMC, NUTS, HMCECS, SVI, Trace_ELBO, autoguide
@@ -352,14 +316,6 @@ if __name__ == "__main__":
             numpyro.sample(
                 "Y", npr_dist.Bernoulli(logits=logits), obs=Y
             )
-
-        # def model(obs, data):
-        #     n, m = data.shape
-        #     theta = numpyro.sample("w", npr_dist.Normal(jnp.zeros(m), 2 * jnp.ones(m)))
-        #     numpyro.sample(
-        #         "Y", npr_dist.Bernoulli(logits=theta @ data.T), obs=obs
-        #     )
-
 
         def run_inference(model, rng_key, Y, X, a0, b0, dim):
             kernel = NUTS(model)
@@ -380,7 +336,7 @@ if __name__ == "__main__":
         rng_key, rng_key_predict = random.split(random.PRNGKey(0))
         Y = jnp.array(y_train.cpu()).reshape((-1,))
         X = jnp.array(X_train.cpu())
-        #! change labels from {-1, 1} to {0, 1}
+        # change labels from {-1, 1} to {0, 1}
         Y = Y.at[Y == -1].set(0.)
         print(jnp.unique(Y))
         print("shape of input data to NUTS:", X.shape, "\nD:", D)

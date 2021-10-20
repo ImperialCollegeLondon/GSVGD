@@ -69,8 +69,8 @@ if not os.path.exists(results_folder):
 if args.kernel == "rbf":
     Kernel = RBF
     BatchKernel = BatchRBF
-elif args.kernel == "imq":
-    Kernel = IMQ
+# elif args.kernel == "imq":
+#     Kernel = IMQ
 
 
 if __name__ == "__main__":
@@ -109,7 +109,7 @@ if __name__ == "__main__":
         svgd = SVGD(distribution, kernel, optim.Adam([x], lr=lr), device=device)
 
         start = time.time()
-        _ = svgd.fit(x0=x, epochs=epochs, save_every=save_every)
+        svgd.fit(x0=x, epochs=epochs, save_every=save_every)
         elapsed_time = time.time() - start
 
         fitted_method = svgd

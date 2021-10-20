@@ -99,8 +99,8 @@ if not os.path.exists(results_folder):
 if args.kernel == "rbf":
     Kernel = RBF
     BatchKernel = BatchRBF
-elif args.kernel == "imq":
-    Kernel = IMQ
+# elif args.kernel == "imq":
+#     Kernel = IMQ
 
 if __name__ == "__main__":
     print(f"Device: {device}")
@@ -109,7 +109,6 @@ if __name__ == "__main__":
     ## target density
     mix_means = torch.zeros((2, dim), device=device)
     mix_means[:, :2] = 1
-    # mix_means[:, :] = 2
 
     distribution = xshaped_gauss_experiment(
         mixture_dist=D.Categorical(torch.ones(mix_means.shape[0], device=device)),
@@ -134,7 +133,7 @@ if __name__ == "__main__":
         kernel = Kernel(method="med_heuristic")
         svgd = SVGD(distribution, kernel, optim.Adam([x], lr=lr), device=device)
         start = time.time()
-        metric_svgd = svgd.fit(x, epochs, verbose=True, metric=metric_fn, save_every=save_every)
+        svgd.fit(x, epochs, verbose=True, metric=metric_fn, save_every=save_every)
         elapsed_time_svgd = time.time() - start
 
         # plot particles

@@ -70,10 +70,8 @@ if not os.path.exists(results_folder):
 if args.kernel == "rbf":
     Kernel = RBF
     BatchKernel = BatchRBF
-elif args.kernel == "imq":
-    Kernel = IMQ
-# elif args.kernel == "linear":
-#     Kernel = Linear
+# elif args.kernel == "imq":
+#     Kernel = IMQ
 
 if __name__ == "__main__":
     print(f"Device: {device}")
@@ -99,7 +97,7 @@ if __name__ == "__main__":
     kernel = Kernel(method="med_heuristic")
     svgd = SVGD(distribution, kernel, optim.Adam([x], lr=lr), device=device)
     start = time.time()
-    metric_svgd = svgd.fit(x, epochs, verbose=True, metric=metric_fn, save_every=save_every)
+    svgd.fit(x, epochs, verbose=True, metric=metric_fn, save_every=save_every)
     elapsed_time_svgd = time.time() - start
 
     # plot particles
