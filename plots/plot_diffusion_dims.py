@@ -34,8 +34,8 @@ noise = "_noise" if args.noise=="True" else ""
 basedir = f"{args.root}/{args.exp}"
 resdir = f"rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim{dim}"
 resdir_svgd = f"rbf_epoch{args.epochs}_lr{lr}_delta0.1_n{nparticles}_dim{dim}"
-# resdir_ssvgd = f"rbf_epoch{args.epochs}_lr{lr}_delta0.1_n{nparticles}_dim{dim}"
-resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.01_delta0.1_n{nparticles}_dim{dim}"
+resdir_ssvgd = f"rbf_epoch{args.epochs}_lr{lr}_delta0.1_n{nparticles}_dim{dim}"
+# resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.01_delta0.1_n{nparticles}_dim{dim}"
 
 seeds = range(20)
 eff_dims = [1, 2, 5] + [i for i in range(10, 110, 10)]
@@ -141,7 +141,7 @@ if __name__ == "__main__":
   # for eff_dim in eff_dims:
   #   print(eff_dim, df.loc[df.eff_dim == eff_dim, "energy"].mean())
 
-  fig = plt.figure(figsize=(12, 8))
+  fig = plt.figure(figsize=(12, 6))
   g = sns.lineplot(
     data=df,
     x="eff_dim", 
@@ -162,7 +162,7 @@ if __name__ == "__main__":
   plt.xticks(fontsize=20)
   plt.ylabel("Energy Distance", fontsize=25)
   plt.yticks(fontsize=20)
-  plt.legend(fontsize=20, markerscale=2, bbox_to_anchor=(1, 0.4), loc='center right')
+  plt.legend(fontsize=25, markerscale=2, bbox_to_anchor=(1.01, 1.0), loc='upper left')
   fig.tight_layout()
 
   fig.savefig(f"{basedir}/{resdir}/solution_effdim.png")

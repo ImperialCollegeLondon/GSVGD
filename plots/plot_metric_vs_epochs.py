@@ -76,7 +76,7 @@ if __name__ == "__main__":
       eff_dims = res["effdims"]
       epochs = res["epochs"]
 
-      target, svgd, s_svgd = res["target"], res["svgd"], res["s_svgd"]
+      target, svgd, s_svgd = res["target"], res["svgd"], res["maxsvgd"]
       gsvgd = {s: res[s] for s in [f"gsvgd_effdim{d}" for d in eff_dims]}
       # save last particles in list
       dim = svgd[-1].shape[1]
@@ -205,8 +205,10 @@ if __name__ == "__main__":
     plt.xticks(fontsize=27)
     plt.ylabel(metrics_ylabs[met], fontsize=38)
     plt.yticks(fontsize=27)
-    # plt.legend(fontsize=25, markerscale=2.5, bbox_to_anchor=(1.01, 0.8), loc='upper left')
-    plt.legend(fontsize=25, markerscale=2.5, loc='center right')
+    if "gaussian" in args.exp:
+      plt.legend(fontsize=25, markerscale=2.5, bbox_to_anchor=(0.99, 0.4), loc='center right')
+    else:
+      plt.legend(fontsize=25, markerscale=2.5, loc='center right')
     fig.tight_layout()
     save_path = f"{basedir}/{res_path}"
     fig.savefig(f"{save_path}/{met}.png")
