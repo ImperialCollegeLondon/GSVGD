@@ -1,13 +1,8 @@
-import pandas as pd
 import torch
 import torch.autograd as autograd
 from torch import einsum
 from tqdm import tqdm, trange
 import autograd.numpy as np
-
-import sys
-sys.path.append(".")
-from src.utils import AdaGrad_update
 
 
 class FullGSVGDBatch:

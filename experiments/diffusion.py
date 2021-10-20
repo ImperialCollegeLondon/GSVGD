@@ -1,19 +1,12 @@
 import os
-# os.environ["CUDA_VISIBLE_DEVICES"] = "4,5,6,7"
 import numpy as np
 import pandas as pd
 import torch
 import torch.optim as optim
-import scipy.io
-import sys
-
-sys.path.append(".")
 
 from src.svgd import SVGD
-# from src.full_gsvgd_seq import FullGSVGD
 from src.gsvgd import FullGSVGDBatch
 from src.kernel import RBF, BatchRBF
-from src.metrics import Metric
 from src.manifold import Grassmann
 from src.s_svgd import SlicedSVGD
 from src.diffusion import Diffusion

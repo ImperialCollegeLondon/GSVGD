@@ -3,10 +3,6 @@ import torch.autograd as autograd
 import autograd.numpy as np
 from tqdm import tqdm, trange
 
-import sys
-sys.path.append(".")
-from src.utils import AdaGrad_update
-
 class SVGD:
     def __init__(
         self,

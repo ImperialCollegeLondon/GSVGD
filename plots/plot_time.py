@@ -1,14 +1,11 @@
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "0,2,3,4,5,6,7"
-import sys
-sys.path.append(".")
 import matplotlib.pyplot as plt 
 import seaborn as sns
 import pickle
 import numpy as np
 import pandas as pd
 import torch
-from src.metrics import Metric
 import argparse
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

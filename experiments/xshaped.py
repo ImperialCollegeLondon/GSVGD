@@ -1,24 +1,13 @@
 import os
-# os.environ["CUDA_VISIBLE_DEVICES"] = "2,3"
-
 import numpy as np
-import pandas as pd
 import torch
 import torch.optim as optim
-from torch.distributions import MultivariateNormal
 import torch.distributions as D
-import seaborn as sns
-from tqdm import tqdm
-from geomloss import SamplesLoss
-import sys
-sys.path.append(".")
-
-print(torch.cuda.device_count())
 
 from src.svgd import SVGD
 from src.gsvgd import FullGSVGDBatch
 from src.kernel import RBF, BatchRBF
-from src.utils import plot_particles, plot_metrics, plot_particles_hist
+from src.utils import plot_particles
 from src.metrics import Metric
 from src.manifold import Grassmann
 from src.s_svgd import SlicedSVGD
@@ -133,7 +122,7 @@ if __name__ == "__main__":
         kernel = Kernel(method="med_heuristic")
         svgd = SVGD(distribution, kernel, optim.Adam([x], lr=lr), device=device)
         start = time.time()
-        svgd.fit(x, epochs, verbose=True, metric=metric_fn, save_every=save_every)
+        svgd.fit(x, epochs, verbose=True, save_every=save_every)
         elapsed_time_svgd = time.time() - start
 
         # plot particles
@@ -184,7 +173,7 @@ if __name__ == "__main__":
                 )
                 start = time.time()
                 U, metric_gsvgd = gsvgd.fit(x_gsvgd, U, m, epochs, 
-                    verbose=True, metric=metric_fn, save_every=save_every, threshold=0.0001*m)
+                    verbose=True, save_every=save_every, threshold=0.0001*m)
                 elapsed_time = time.time() - start
 
                 # plot particles
@@ -223,7 +212,6 @@ if __name__ == "__main__":
             n_epoch=epochs, 
             lr=args.lr_g,
             eps=lr,
-            metric=metric_fn,
             save_every=save_every
         )
         elapsed_time_s_svgd = time.time() - start
@@ -291,16 +279,4 @@ if __name__ == "__main__":
 
     # target distribution
     torch.save(distribution, results_folder + '/target_dist.p')
-
-    # # gsvgd
-    # torch.save(
-    #     {f"gsvgd_effdim{d}": r["res"] for d, r in zip(eff_dims, res_gsvgd)},
-    #     results_folder + '/gsvgd.p'
-    # )
-
-    # plotting metrics
-    del svgd
-    del res_gsvgd
-    del s_svgd
-    sh = f"python plots/plot_metric_vs_epochs.py --exp=xshaped{args.suffix} --nparticles={nparticles} --epochs={epochs} --lr={lr} --delta={delta} --dim={dim}"
-    os.system(sh)
+    

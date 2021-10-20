@@ -1,7 +1,5 @@
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "1,3,4,5,6,7"
-import sys
-sys.path.append(".")
 import matplotlib.pyplot as plt 
 import seaborn as sns
 import pickle

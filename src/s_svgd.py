@@ -2,12 +2,11 @@ import sys
 import os
 import argparse
 
-cwd=os.getcwd()
-cwd_parent=os.path.abspath('.')
-sys.path.append(cwd)
-sys.path.append(cwd_parent+'/Divergence')
-sys.path.append(cwd_parent)
-import random
+# cwd=os.getcwd()
+# cwd_parent=os.path.abspath('.')
+# sys.path.append(cwd)
+# sys.path.append(cwd_parent+'/Divergence')
+# sys.path.append(cwd_parent)
 import torch
 from tqdm import tqdm, trange
 from src.Sliced_KSD_Clean.Util import *
@@ -33,9 +32,7 @@ class SlicedSVGD:
     lr, 
     eps, 
     g_nupdates=1, 
-    metric=None, 
     save_every=100, 
-    threshold=0,
     X_test=None,
     y_test=None
   ):
@@ -126,7 +123,6 @@ class SlicedSVGD:
         samples = samples.clone().requires_grad_()
 
       if (ep+1)%save_every==0:
-          # self.metrics[ep//save_every] = metric(samples.detach())
           self.particles[1 + ep//save_every] = samples.clone().detach().cpu()
           self.g[1 + ep//save_every] = g_n.clone().detach().cpu()
           self.pam[ep//save_every] = pam
@@ -156,8 +152,7 @@ class SlicedSVGDLR(SlicedSVGD):
     eps, 
     g_nupdates=1, 
     metric=None, 
-    save_every=100, 
-    threshold=0,
+    save_every=100,
     train_loader=None,
     test_data=None,
     valid_data=None
@@ -262,10 +257,5 @@ class SlicedSVGDLR(SlicedSVGD):
       if metric and (ep+1)%save_every==0:
           self.particles[1 + ep//save_every] = samples.clone().detach().cpu()
           self.pam[ep//save_every] = pam
-      
-      # early stop
-      if pam < threshold:
-        print(f"GSVGD converged in {ep+1} epochs as PAM {pam} is less than {threshold}")
-        break  
     
     return samples, self.metrics

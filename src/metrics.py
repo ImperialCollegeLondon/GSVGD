@@ -3,10 +3,7 @@ import numpy as np
 from scipy.spatial import cKDTree as KDTree
 import numpy as np
 from geomloss import SamplesLoss
-import sys
-sys.path.append(".")
 from src.kernel import RBF
-from src.kernel import l2norm
 
 def kldivergence(x, y):
     ## Adapted from https://gist.github.com/atabakd/ed0f7581f8510c8587bc2f41a094b518

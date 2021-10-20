@@ -1,21 +1,13 @@
 import os
 import numpy as np
-import pandas as pd
 import torch
 import torch.optim as optim
-from torch.distributions import MultivariateNormal
 import torch.distributions as D
-import seaborn as sns
-from tqdm import tqdm
-from geomloss import SamplesLoss
-import sys
-sys.path.append(".")
 
 from src.svgd import SVGD
-# from src.full_gsvgd_seq import FullGSVGD
 from src.gsvgd import FullGSVGDBatch
 from src.kernel import RBF, BatchRBF
-from src.utils import plot_particles, plot_metrics, plot_particles_hist
+from src.utils import plot_particles
 from src.metrics import Metric
 from src.manifold import Grassmann
 from src.s_svgd import SlicedSVGD
@@ -97,7 +89,7 @@ if __name__ == "__main__":
     kernel = Kernel(method="med_heuristic")
     svgd = SVGD(distribution, kernel, optim.Adam([x], lr=lr), device=device)
     start = time.time()
-    svgd.fit(x, epochs, verbose=True, metric=metric_fn, save_every=save_every)
+    svgd.fit(x, epochs, verbose=True, save_every=save_every)
     elapsed_time_svgd = time.time() - start
 
     # plot particles
@@ -147,7 +139,7 @@ if __name__ == "__main__":
             )
             start = time.time()
             U, metric_gsvgd = gsvgd.fit(x_gsvgd, U, m, epochs, 
-                verbose=True, metric=metric_fn, save_every=save_every, threshold=0.0001*m)
+                verbose=True, save_every=save_every, threshold=0.0001*m)
             elapsed_time = time.time() - start
 
             # plot particles
@@ -183,7 +175,6 @@ if __name__ == "__main__":
         n_epoch=epochs, 
         lr=args.lr_g,
         eps=lr,
-        metric=metric_fn,
         save_every=save_every
     )
     elapsed_time_s_svgd = time.time() - start

@@ -1,19 +1,16 @@
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "1,4,5,6,7"
-import sys
-sys.path.append(".")
 import matplotlib.pyplot as plt 
 import seaborn as sns
 import pickle
 import numpy as np
 import pandas as pd
 import torch
-from src.metrics import Metric
 import argparse
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-parser = argparse.ArgumentParser(description='Plotting metrics.')
+parser = argparse.ArgumentParser(description='Plotting final particles.')
 parser.add_argument('--exp', type=str, help='Experiment to run')
 parser.add_argument('--root', type=str, default="res", help='Root dir for results')
 parser.add_argument('--nparticles', type=int, default=500, help='Num of particles')

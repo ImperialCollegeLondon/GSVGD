@@ -1,22 +1,14 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1,2,3,4"
 import numpy as np
 import pandas as pd
 import torch
 import torch.optim as optim
-import torchvision
 import scipy.io
 from sklearn.model_selection import train_test_split
-import sys
-
-sys.path.append(".")
 
 from src.svgd import SVGDLR
-# from src.full_gsvgd_seq import FullGSVGDLR
 from src.gsvgd import FullGSVGDBatchLR
 from src.kernel import RBF, BatchRBF
-from src.utils import plot_particles
-from src.metrics import Metric
 from src.manifold import Grassmann
 from src.s_svgd import SlicedSVGDLR
 from src.blr import BayesianLR
@@ -144,7 +136,6 @@ if __name__ == "__main__":
 
     # load data into datasets
     N = X_input.shape[0]
-    # X_input = np.hstack([X_input, np.ones([N, 1])])
     d = X_input.shape[1]
     D = d + 1
 
@@ -226,35 +217,21 @@ if __name__ == "__main__":
         eff_dim = args.effdim
 
         print(f"Running GSVGD with eff dim = {eff_dim}")
-        # m = min(D, 20) // eff_dim
         m = min(20, D // eff_dim)
-        # m = min(100, D // eff_dim)
-        # m = max(1, D // eff_dim)
         print("number of projections:", m)
 
         # sample from variational density
         x_gsvgd = theta0.clone().requires_grad_()
 
-        # kernel_gsvgd = Kernel(method="med_heuristic")
         kernel_gsvgd = BatchKernel(method="med_heuristic")
         optimizer = optim.Adam([x_gsvgd], lr=lr)
         manifold = Grassmann(D, eff_dim)
-        # U = torch.eye(D).requires_grad_(True).to(device)
-        # U = U[:, :(m*eff_dim)]
-        U = torch.nn.init.orthogonal_(
-            torch.empty(D, m*eff_dim)
-        ).requires_grad_(True).to(device)
+        U = torch.eye(D).requires_grad_(True).to(device)
+        U = U[:, :(m*eff_dim)]
+        # U = torch.nn.init.orthogonal_(
+        #     torch.empty(D, m*eff_dim)
+        # ).requires_grad_(True).to(device)
 
-        # gsvgd = FullGSVGDLR(
-        #     target=distribution,
-        #     kernel=kernel_gsvgd,
-        #     manifold=manifold,
-        #     optimizer=optimizer,
-        #     delta=delta,
-        #     T=T,
-        #     device=device,
-        #     noise=add_noise
-        # )
         gsvgd = FullGSVGDBatchLR(
             target=distribution,
             kernel=kernel_gsvgd,
@@ -300,11 +277,10 @@ if __name__ == "__main__":
 
     elif args.method == "hmc":
         import numpyro
-        from numpyro.infer import MCMC, NUTS, HMCECS, SVI, Trace_ELBO, autoguide
+        from numpyro.infer import MCMC, NUTS
         import numpyro.distributions as npr_dist
         import jax.random as random
         import jax.numpy as jnp
-        import jax
 
         def model(Y, X):
             _, dim = X.shape
@@ -341,7 +317,6 @@ if __name__ == "__main__":
         print(jnp.unique(Y))
         print("shape of input data to NUTS:", X.shape, "\nD:", D)
         particles_dict, elapsed_time = run_inference(model, rng_key, Y, X, a0, b0, D-1)
-        # mcmc, particles_dict, elapsed_time = run_hmcecs(model, rng_key, X, Y)
         theta = np.hstack([particles_dict["w"], particles_dict["alpha"].reshape((-1, 1))])
         theta = torch.Tensor(theta).to(device)
         print("shape of results:", theta.shape)

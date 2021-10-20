@@ -1,12 +1,8 @@
-import sys
-sys.path.append(".")
 import matplotlib.pyplot as plt 
 import seaborn as sns
 import pickle
-import numpy as np
 import pandas as pd
 import torch
-from src.metrics import Metric
 import argparse
 import os
 
