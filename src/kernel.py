@@ -100,7 +100,6 @@ class RBF(torch.nn.Module):
         # (symmetric kernel)
         # Gram matrix
         sigma2_inv = 1 / (1e-9 + self.sigma ** 2)
-        # TODO: Is this correct?
         a = (-l2norm(X, Y) * sigma2_inv).exp().unsqueeze(0)
         # diff_{ijk} = y^i_j - x^i_k
         diff = (Y.unsqueeze(1) - X).transpose(0, -1)
