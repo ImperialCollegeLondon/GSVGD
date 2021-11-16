@@ -39,6 +39,7 @@ parser.add_argument("--data", type=str, default="covertype", help="which dataset
 parser.add_argument("--batch", type=int, default=100, help="batch size")
 parser.add_argument("--method", type=str, default="svgd", help="svgd, gsvgd or s-svgd")
 parser.add_argument("--save_every", type=int, default=10, help="save results per xxx epoch")
+parser.add_argument("--subsample_size", type=int, default=0, help="HMCECS subsample size")
 
 args = parser.parse_args()
 lr = args.lr
@@ -277,38 +278,69 @@ if __name__ == "__main__":
 
     elif args.method == "hmc":
         import numpyro
-        from numpyro.infer import MCMC, NUTS
+        from numpyro.infer import MCMC, NUTS, HMCECS
         import numpyro.distributions as npr_dist
         import jax.random as random
         import jax.numpy as jnp
 
-        def model(Y, X):
+        def model(Y, X, subsample_size=None):
             _, dim = X.shape
             alpha = numpyro.sample("alpha", npr_dist.Gamma(a0, b0))
             mean = jnp.zeros(dim)
             var = 1 / alpha * jnp.ones(dim)
             w = numpyro.sample("w", npr_dist.Normal(mean, var))
-            logits = X @ w
-            numpyro.sample(
-                "Y", npr_dist.Bernoulli(logits=logits), obs=Y
-            )
 
-        def run_inference(model, rng_key, Y, X, a0, b0, dim):
-            kernel = NUTS(model)
+            with numpyro.plate("N", X.shape[0], subsample_size=subsample_size) as idx:
+                logits = X[idx] @ w
+                numpyro.sample(
+                    "Y", npr_dist.Bernoulli(logits=logits), obs=Y[idx]
+                )
+            # logits = X @ w
+            # numpyro.sample(
+            #     "Y", npr_dist.Bernoulli(logits=logits), obs=Y
+            # )
+
+        def run_inference(model, rng_key, Y, X, a0, b0, dim, subsample_size):
+            if subsample_size == None:
+                print("Sampler: HMC")
+                kernel = NUTS(model)
+            else:
+                print(f"Sampler: HMCECS with subsample size = {subsample_size}")
+                inner_kernel = NUTS(model)
+                svi_key, mcmc_key = random.split(rng_key)
+
+                # find reference parameters for second order taylor expansion to estimate likelihood (taylor_proxy)
+                optimizer = numpyro.optim.Adam(step_size=1e-3)
+                guide = numpyro.infer.autoguide.AutoDelta(model)
+                svi = numpyro.infer.SVI(model, guide, optimizer, loss=numpyro.infer.Trace_ELBO())
+                svi_result = svi.run(svi_key, 20000, Y, X, subsample_size)
+                params, losses = svi_result.params, svi_result.losses
+                ref_params = {"alpha": params["alpha_auto_loc"], "w": params["w_auto_loc"]}
+
+                # taylor proxy estimates log likelihood (ll) by
+                # taylor_expansion(ll, theta_curr) +
+                #     sum_{i in subsample} ll_i(theta_curr) - taylor_expansion(ll_i, theta_curr) around ref_params
+                proxy = HMCECS.taylor_proxy(ref_params)
+                kernel = HMCECS(inner_kernel, num_blocks=100, proxy=proxy)
+
+            thinning = 30
             mcmc = MCMC(
                 kernel,
-                num_warmup=10000,
-                num_samples=1000,
+                num_warmup=20000,
+                num_samples=2000 * thinning,
                 num_chains=1,
+                thinning=thinning,
                 progress_bar=True,
             )
             start = time.time()
-            mcmc.run(rng_key, Y, X)
+            mcmc.run(rng_key, Y, X, subsample_size)
             elapsed_time = time.time() - start
             mcmc.print_summary()
             print("\nMCMC elapsed time:", elapsed_time)
-            return mcmc.get_samples(), elapsed_time
+            return mcmc.get_samples(), elapsed_time, mcmc
 
+        
+        # set random seeds for HMC
         rng_key, rng_key_predict = random.split(random.PRNGKey(0))
         Y = jnp.array(y_train.cpu()).reshape((-1,))
         X = jnp.array(X_train.cpu())
@@ -316,7 +348,10 @@ if __name__ == "__main__":
         Y = Y.at[Y == -1].set(0.)
         print(jnp.unique(Y))
         print("shape of input data to NUTS:", X.shape, "\nD:", D)
-        particles_dict, elapsed_time = run_inference(model, rng_key, Y, X, a0, b0, D-1)
+        print("To be saved to:", results_folder + f"/particles_hmc.p")
+        subsample_size = None if args.subsample_size == 0 else args.subsample_size
+        particles_dict, elapsed_time, hmc_res = run_inference(
+            model, rng_key, Y, X, a0, b0, D-1, subsample_size=subsample_size)
         theta = np.hstack([particles_dict["w"], particles_dict["alpha"].reshape((-1, 1))])
         theta = torch.Tensor(theta).to(device)
         print("shape of results:", theta.shape)
@@ -336,6 +371,9 @@ if __name__ == "__main__":
         test_acc = [test_acc]
         valid_acc = []
         particles = theta
+
+        # save HMC results
+        # pickle.dump(hmc_res, open(results_folder + f"/hmc.p", "wb"))
 
     print("saved to ", results_folder + f"/particles_{method_name}.p")
     pickle.dump(
