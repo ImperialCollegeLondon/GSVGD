@@ -1,5 +1,5 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "5,1,4,3,7"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "6,7,2,3,4,5,1,0"
 import matplotlib.pyplot as plt 
 import pickle
 import numpy as np
@@ -30,10 +30,11 @@ noise = "_noise" if args.noise=="True" else ""
 basedir = f"{args.root}/{args.exp}"
 resdir = f"rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}"
 resdir_svgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.01_n{nparticles}"
-resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.01_n{nparticles}"
+# resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.01_n{nparticles}"
+resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.01_n{nparticles}" #TODO
 resdir_hmc = resdir
 
-seeds = range(1)
+seeds = range(1) #TODO
 
 if __name__ == "__main__":
 
@@ -41,7 +42,7 @@ if __name__ == "__main__":
   for seed in seeds:
     path = f"{basedir}/{resdir}/seed{seed}"
     path_svgd = f"{basedir}/{resdir_svgd}/seed{seed}"
-    path_ssvgd = f"{basedir}/{resdir_svgd}/seed{seed}"
+    path_ssvgd = f"{basedir}/{resdir_ssvgd}/seed{seed}"
     path_hmc = f"{basedir}/{resdir_hmc}/seed{seed}"
 
     # load results
@@ -53,7 +54,7 @@ if __name__ == "__main__":
     method_ls = [hmc_res, svgd_res, ssvgd_res]
     method_names = ["HMC", "SVGD", "S-SVGD"]
 
-    eff_dims = [1, 10, 50] # [1, 2, 5, 10, 20, 30, 40, 50]
+    eff_dims = [1, 2, 5, 10, 20, 30, 40, 50, 55] #TODO
     for eff_dim in eff_dims:
       gsvgd_res = pickle.load(open(f"{path}/particles_gsvgd_effdim{eff_dim}.p", "rb"))
       method_ls.append(gsvgd_res)
@@ -83,6 +84,7 @@ if __name__ == "__main__":
       print(i, method_name)
       plt.subplot(subplot_r, subplot_c, i+1)
       plt.imshow(cov_matrix, vmin=-5, vmax=8)
+      # plt.imshow(cov_matrix, vmin=-3, vmax=3)
       plt.xticks(fontsize=35)
       plt.yticks(fontsize=35)
       plt.title(method_name, fontsize=35)

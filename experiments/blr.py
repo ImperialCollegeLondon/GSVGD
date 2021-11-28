@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
         X_input = data["covtype"][:, 1:]
         y_input = data["covtype"][:, :1]
-        nsubsample = 1000 # 10000
+        nsubsample = 1000
         ind = np.random.choice(X_input.shape[0], nsubsample, replace=False)
         X_input, y_input = X_input[ind, :], y_input[ind, :]
         y_input[y_input == 2] = -1
@@ -227,11 +227,11 @@ if __name__ == "__main__":
         kernel_gsvgd = BatchKernel(method="med_heuristic")
         optimizer = optim.Adam([x_gsvgd], lr=lr)
         manifold = Grassmann(D, eff_dim)
-        U = torch.eye(D).requires_grad_(True).to(device)
-        U = U[:, :(m*eff_dim)]
-        # U = torch.nn.init.orthogonal_(
-        #     torch.empty(D, m*eff_dim)
-        # ).requires_grad_(True).to(device)
+        # U = torch.eye(D).requires_grad_(True).to(device) #! hard coded
+        # U = U[:, :(m*eff_dim)]
+        U = torch.nn.init.orthogonal_(
+            torch.empty(D, m*eff_dim)
+        ).requires_grad_(True).to(device)
 
         gsvgd = FullGSVGDBatchLR(
             target=distribution,
@@ -323,11 +323,11 @@ if __name__ == "__main__":
                 proxy = HMCECS.taylor_proxy(ref_params)
                 kernel = HMCECS(inner_kernel, num_blocks=100, proxy=proxy)
 
-            thinning = 30
+            thinning = 20
             mcmc = MCMC(
                 kernel,
                 num_warmup=20000,
-                num_samples=2000 * thinning,
+                num_samples=10000 * thinning,
                 num_chains=1,
                 thinning=thinning,
                 progress_bar=True,

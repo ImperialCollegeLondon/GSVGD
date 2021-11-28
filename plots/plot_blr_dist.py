@@ -1,5 +1,5 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "5,1,4,3,7"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "6,7,2,3,4,5,1,0"
 import matplotlib.pyplot as plt 
 import seaborn as sns
 import pickle
@@ -33,10 +33,11 @@ noise = "_noise" if args.noise=="True" else ""
 basedir = f"{args.root}/{args.exp}"
 resdir = f"rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}"
 resdir_svgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.01_n{nparticles}"
-resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.01_n{nparticles}"
+# resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.01_n{nparticles}"
+resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.01_n{nparticles}" #TODO
 resdir_hmc = resdir
 
-seeds = range(10)
+seeds = range(10) #TODO
 
 if __name__ == "__main__":
 
@@ -44,7 +45,7 @@ if __name__ == "__main__":
   for seed in seeds:
     path = f"{basedir}/{resdir}/seed{seed}"
     path_svgd = f"{basedir}/{resdir_svgd}/seed{seed}"
-    path_ssvgd = f"{basedir}/{resdir_svgd}/seed{seed}"
+    path_ssvgd = f"{basedir}/{resdir_ssvgd}/seed{seed}"
     path_hmc = f"{basedir}/{resdir_hmc}/seed{seed}"
 
     # load results
@@ -52,12 +53,13 @@ if __name__ == "__main__":
     ssvgd_res = pickle.load(open(f"{path_ssvgd}/particles_s-svgd_lrg{args.lr_g}.p", "rb"))
     hmc_res = pickle.load(open(f"{path_hmc}/particles_hmc.p", "rb"))
     particles_hmc = hmc_res["particles"].cpu()
-    cov_hmc = np.cov(particles_hmc.T) # cov matrix
+    cov_hmc = np.cov(particles_hmc.T) # cov matrix #TODO
+    # cov_hmc = cov_mat(particles_hmc)
     
     method_ls = [svgd_res, ssvgd_res]
     method_names = ["SVGD", "S-SVGD"]
 
-    eff_dims = [1, 2, 5, 10, 20, 30, 40, 50]
+    eff_dims = [1, 2, 5, 10, 20, 30, 40, 50, 55] #TODO
     for eff_dim in eff_dims:
       gsvgd_res = pickle.load(open(f"{path}/particles_gsvgd_effdim{eff_dim}.p", "rb"))
       method_ls.append(gsvgd_res)
@@ -71,7 +73,6 @@ if __name__ == "__main__":
 
     subplot_c = 3 # int(np.ceil(np.sqrt(len(method_ls))))
     subplot_r = int(np.ceil(len(method_ls) / subplot_c))
-
 
     ## plot solutions
     for i, (res, method_name) in enumerate(zip(method_ls, method_names)):
@@ -87,13 +88,16 @@ if __name__ == "__main__":
       energy_dist = energy(particles_hmc, particles).item()
 
       # cov matrix
-      cov_matrix = np.cov(particles.T)
+      cov_matrix = np.cov(particles.T) # TODO
+      # cov_matrix = cov_mat(particles)
       l2_dist = np.sqrt(np.sum((cov_matrix - cov_hmc)**2))
       l2_diag_dist = np.sqrt(np.sum(np.diag(cov_matrix - cov_hmc)**2))
-      # if method_name in ["SVGD", "S-SVGD"]:
+      # if method_name in ["SVGD", "S-SVGD", "GSVGD40"]:
       #   print(method_name)
       #   print(np.diag(cov_matrix))
       #   print(np.diag(cov_hmc))
+        # print("HMC", cov_hmc[53:, 53:])
+        # print(method_name, cov_matrix[53:, 53:])
 
       if not "GSVGD" in method_name:
         rep = len(eff_dims)
