@@ -1,5 +1,5 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,2,3,4,5,6,7"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0,2,3,4,5,6,7"
 import matplotlib.pyplot as plt 
 import seaborn as sns
 import pickle
@@ -10,6 +10,7 @@ from src.metrics import Metric
 from src.diffusion import Diffusion
 import argparse
 
+# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 device = "cuda:5"
 
 parser = argparse.ArgumentParser(description='Plotting metrics.')
@@ -78,7 +79,7 @@ if __name__ == "__main__":
     fig = plt.figure(figsize=(subplot_c*5, subplot_r*5))
 
     ## plot solutions
-    # get HMC solution
+    # get HMC solutiondevice
     hmc_particles = hmc_res["particles"][-1].to(target_dist.device)
     hmc_sol_particles = target_dist.solution(hmc_particles).cpu().numpy()
     
@@ -139,14 +140,15 @@ if __name__ == "__main__":
   # for eff_dim in eff_dims:
   #   print(eff_dim, df.loc[df.eff_dim == eff_dim, "energy"].mean())
 
-  fig = plt.figure(figsize=(12, 6))
+  # fig = plt.figure(figsize=(12, 6))
+  fig = plt.figure(figsize=(10, 6))
   g = sns.lineplot(
     data=df,
     x="eff_dim", 
     y="energy", 
     hue="method",
     markers=True,
-    markersize=8,
+    markersize=18,
     # alpha=1,
     ci="sd"
   )
@@ -156,11 +158,12 @@ if __name__ == "__main__":
   # plt.fill_between(data=df.loc[df.method=="S-SVGD"], 
   #   x="eff_dim", y1="lower", y2="upper", alpha=0.2)
 
-  plt.xlabel("Projection Dimensions", fontsize=25)
-  plt.xticks(fontsize=20)
-  plt.ylabel("Energy Distance", fontsize=25)
-  plt.yticks(fontsize=20)
-  plt.legend(fontsize=25, markerscale=2, bbox_to_anchor=(1.01, 1.0), loc='upper left')
+  plt.xlabel("Projection Dimensions", fontsize=38)
+  plt.xticks(fontsize=32)
+  plt.ylabel("Energy Distance", fontsize=38)
+  plt.yticks(fontsize=32)
+  # plt.legend(fontsize=25, markerscale=2, bbox_to_anchor=(1.01, 1.0), loc='upper left')
+  plt.legend(fontsize=28, markerscale=2, bbox_to_anchor=(0.95, 0.7), loc='upper right')
   fig.tight_layout()
 
   fig.savefig(f"{basedir}/{resdir}/solution_effdim.png")

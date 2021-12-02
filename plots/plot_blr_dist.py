@@ -37,7 +37,7 @@ resdir_svgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.01_n{nparticles}"
 resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.01_n{nparticles}" #TODO
 resdir_hmc = resdir
 
-seeds = range(10) #TODO
+seeds = range(5) #TODO
 
 if __name__ == "__main__":
 
@@ -92,12 +92,6 @@ if __name__ == "__main__":
       # cov_matrix = cov_mat(particles)
       l2_dist = np.sqrt(np.sum((cov_matrix - cov_hmc)**2))
       l2_diag_dist = np.sqrt(np.sum(np.diag(cov_matrix - cov_hmc)**2))
-      # if method_name in ["SVGD", "S-SVGD", "GSVGD40"]:
-      #   print(method_name)
-      #   print(np.diag(cov_matrix))
-      #   print(np.diag(cov_hmc))
-        # print("HMC", cov_hmc[53:, 53:])
-        # print(method_name, cov_matrix[53:, 53:])
 
       if not "GSVGD" in method_name:
         rep = len(eff_dims)
@@ -134,7 +128,7 @@ if __name__ == "__main__":
         df.loc[cond, "upper"] = mean + 1.96*std/np.sqrt(len(seeds))
         
     # plot observations
-    fig = plt.figure(figsize=(12, 8))
+    fig = plt.figure(figsize=(10, 6))
     g = sns.lineplot(
       data=df,
       x="eff_dim",
@@ -148,12 +142,12 @@ if __name__ == "__main__":
       plt.fill_between(data=df.loc[df.method==method_name], 
         x="eff_dim", y1="lower", y2="upper", alpha=0.2)
 
-    plt.xlabel("Projection Dimension", fontsize=40)
-    plt.xticks(fontsize=35)
-    ylab_fontsize = 40 # if metric == "Covariance Error" else 40
+    plt.xlabel("Projection Dimension", fontsize=38)
+    plt.xticks(fontsize=32)
+    ylab_fontsize = 38 # if metric == "Covariance Error" else 40
     plt.ylabel(metric, fontsize=ylab_fontsize)
-    plt.yticks(fontsize=35)
-    plt.legend(fontsize=30)
+    plt.yticks(fontsize=32)
+    plt.legend(fontsize=28, loc="center right")
     fig.tight_layout()
 
     fig_name = f"{basedir}/{resdir}/{metric}"

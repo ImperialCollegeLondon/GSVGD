@@ -91,6 +91,7 @@ if __name__ == "__main__":
         # load results
         res = pickle.load(open(f"{path}/particles.p", "rb"))
         eff_dims = res["effdims"]
+        res["s_svgd"] = res["maxsvgd"] #TODO delete
         target, svgd, s_svgd = res["target"], res["svgd"], res["s_svgd"]
         gsvgd = {s: res[s] for s in [f"gsvgd_effdim{d}" for d in eff_dims]}
 
@@ -171,7 +172,7 @@ if __name__ == "__main__":
       hue="method", 
       style="method", 
       markers=True,
-      markersize=14,
+      markersize=18,
       # legend=False
       # ci=68
     )
@@ -185,14 +186,14 @@ if __name__ == "__main__":
 
     if met != "var":
       g.set_yscale("log")
-    plt.xlabel("Dimension", fontsize=30)
-    plt.xticks(fontsize=26)
-    plt.ylabel(met_ylabel, fontsize=30)
-    plt.yticks(fontsize=26)
+    plt.xlabel("Dimension", fontsize=40)
+    plt.xticks(fontsize=32)
+    plt.ylabel(met_ylabel, fontsize=40)
+    plt.yticks(fontsize=32)
     if met == "var":
-      plt.legend(fontsize=20, markerscale=2, bbox_to_anchor=(1, 0.4), loc='center right')
+      plt.legend(fontsize=28, markerscale=2, bbox_to_anchor=(1, 0.4), loc='center right')
     else:
-      plt.legend(fontsize=20, markerscale=2, bbox_to_anchor=(0.95, 0.7), loc='upper right')
+      plt.legend(fontsize=28, markerscale=2, bbox_to_anchor=(0.95, 0.7), loc='upper right')
     fig.tight_layout()
     fig.savefig(f"{save_dir}/{met}.png")
     fig.savefig(f"{save_dir}/{met}.pdf")

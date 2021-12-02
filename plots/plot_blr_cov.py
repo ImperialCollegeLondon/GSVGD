@@ -54,7 +54,7 @@ if __name__ == "__main__":
     method_ls = [hmc_res, svgd_res, ssvgd_res]
     method_names = ["HMC", "SVGD", "S-SVGD"]
 
-    eff_dims = [1, 2, 5, 10, 20, 30, 40, 50, 55] #TODO
+    eff_dims = [1, 10, 50] # [1, 2, 5, 10, 20, 30, 40, 50, 55] #TODO
     for eff_dim in eff_dims:
       gsvgd_res = pickle.load(open(f"{path}/particles_gsvgd_effdim{eff_dim}.p", "rb"))
       method_ls.append(gsvgd_res)
@@ -87,10 +87,10 @@ if __name__ == "__main__":
       # plt.imshow(cov_matrix, vmin=-3, vmax=3)
       plt.xticks(fontsize=35)
       plt.yticks(fontsize=35)
-      plt.title(method_name, fontsize=35)
+      plt.title(method_name, fontsize=42)
       if i == len(method_names) - 1:
         cbar = plt.colorbar()
-        cbar.ax.tick_params(labelsize=25)
+        cbar.ax.tick_params(labelsize=35)
 
     fig.tight_layout()
     fig_name = f"{basedir}/{resdir}/seed{seed}/cov"

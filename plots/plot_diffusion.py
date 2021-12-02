@@ -1,5 +1,5 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,5,7,2,3,6,1"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0,5,7,2,3,6,1"
 import matplotlib.pyplot as plt 
 import seaborn as sns
 import pickle
@@ -32,9 +32,9 @@ noise = "_noise" if args.noise=="True" else ""
 basedir = f"{args.root}/{args.exp}"
 resdir = f"rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim{dim}"
 resdir_svgd = f"rbf_epoch{args.epochs}_lr{lr}_delta0.1_n{nparticles}_dim{dim}"
-# resdir_ssvgd = f"rbf_epoch{args.epochs}_lr{lr}_delta0.1_n{nparticles}_dim{dim}"
+resdir_ssvgd = f"rbf_epoch{args.epochs}_lr{lr}_delta0.1_n{nparticles}_dim{dim}"
 # resdir_svgd = f"rbf_epoch{args.epochs}_lr0.01_delta0.1_n{nparticles}_dim{dim}"
-resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.01_delta0.1_n{nparticles}_dim{dim}"
+# resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.01_delta0.1_n{nparticles}_dim{dim}"
 
 seeds = range(1)
 
@@ -155,7 +155,8 @@ if __name__ == "__main__":
         color="red",
         # join=False,
         linestyle="",
-        marker="o"
+        marker="o",
+        markersize=18,
       )
 
       # plot solutions
@@ -168,28 +169,31 @@ if __name__ == "__main__":
         # markers=True,
         # markersize=8,
         # alpha=1,
-        ci=None
+        ci=None,
+        linewidth=3,
       )
 
       # plt.fill_between(data=df.loc[(df.method==method_name) & (df.time!=0.95)], 
       plt.fill_between(data=df.loc[df.method==method_name], 
         x="time", y1="lower", y2="upper", alpha=0.2)
-      plt.title(method_name, fontsize=20)
+      plt.title(method_name, fontsize=42)
       plt.xlim(0, 1)
-      plt.ylim(-1.8, 0.1)
-      plt.xlabel("Time Steps", fontsize=25)
-      plt.xticks(fontsize=20)
-      plt.ylabel("Solution", fontsize=25)
-      plt.yticks(fontsize=20)
+      plt.ylim(-1.75, 0.35)
+      plt.xlabel("Time Steps", fontsize=38)
+      plt.xticks(fontsize=26)
+      plt.ylabel("Solution", fontsize=42)
+      plt.yticks(fontsize=26)
       if i < subplot_c:
         g.set(xticks=[])
         plt.xlabel(None)
       if i != 0 and i != subplot_c:
         # g.set(yticks=[])
         plt.ylabel(None)
-      if i == 2:
-        plt.legend(bbox_to_anchor=(0.4, 1.3), loc="upper center", borderaxespad=0., 
-          fontsize=20, labels=["Data", "Mean", "True"], ncol=3)
+      if i == 0:
+        # plt.legend(bbox_to_anchor=(0.4, 1.3), loc="upper center", borderaxespad=0., 
+        #   fontsize=20, labels=["Data", "Mean", "True"], ncol=3)
+        plt.legend(loc="upper center", borderaxespad=0., 
+          fontsize=25, labels=["Data", "Mean", "True"])
         # plt.legend(bbox_to_anchor=(1.05, 0.9), loc="upper left", borderaxespad=0., 
         #   fontsize=25, labels=["Data", "Mean", "True"])
       else:
