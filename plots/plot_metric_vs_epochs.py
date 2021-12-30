@@ -74,7 +74,7 @@ if __name__ == "__main__":
       eff_dims = res["effdims"]
       epochs = res["epochs"]
 
-      target, svgd, s_svgd = res["target"], res["svgd"], res["maxsvgd"]
+      target, svgd, s_svgd = res["target"], res["svgd"], res["s_svgd"]
       gsvgd = {s: res[s] for s in [f"gsvgd_effdim{d}" for d in eff_dims]}
       # save last particles in list
       dim = svgd[-1].shape[1]

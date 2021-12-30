@@ -91,7 +91,6 @@ if __name__ == "__main__":
         # load results
         res = pickle.load(open(f"{path}/particles.p", "rb"))
         eff_dims = res["effdims"]
-        res["s_svgd"] = res["maxsvgd"] #TODO delete
         target, svgd, s_svgd = res["target"], res["svgd"], res["s_svgd"]
         gsvgd = {s: res[s] for s in [f"gsvgd_effdim{d}" for d in eff_dims]}
 

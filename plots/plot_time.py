@@ -25,7 +25,7 @@ noise = "_noise" if args.noise else ""
 
 basedir = f"{args.root}/{args.exp}"
 
-nparticles_ls = [100, 800]
+nparticles_ls = [50, 500]
 dims = range(10, 110, 10)
 
 save_dir = f"{basedir}/summary_epoch{args.epochs}_lr{lr}_delta{args.delta}"
@@ -73,7 +73,7 @@ if __name__ == "__main__":
             "Time": time_dict[method],
             "Method": [method_name],
             "N": [nparticles],
-            "dim": [dim]
+            "dim": [dim],
           }
         )
         df_list.append(df_new)
@@ -98,14 +98,12 @@ if __name__ == "__main__":
             "Time": time_dict[method],
             "Method": [f"{method}-{nparticles}"],
             "N": [nparticles],
-            "dim": [dim]
+            "dim": [dim],
           }
         )
         df_list.append(df_new)
     
   metrics_df_orig = pd.concat(df_list)
-  # print(metrics_df_orig.loc[metrics_df_orig.Method == "SVGD-100"])
-  print(df_list[0])
 
   plot_methods = [f"SVGD-{n}" for n in nparticles_ls] + \
       [f"S-SVGD-{n}" for n in nparticles_ls] + \
@@ -124,24 +122,24 @@ if __name__ == "__main__":
 
   ## plot
   fig = plt.figure(figsize=(12, 6))
-  # fig = plt.subplot(2, 1, fig_ind+1)
   g = sns.lineplot(
     data=metrics_df, 
     x="dim", 
     y="Time",
     hue="Method", 
-    style="Method",
+    style="N",
     markers=True,
     markersize=14,
     palette=palatte,
-    hue_order=plot_methods
+    hue_order=plot_methods,
+    legend=False
   )
   g.set_yscale("log")
   plt.xlabel("Dimension", fontsize=30)
   plt.xticks(fontsize=25)
   plt.ylabel("Time", fontsize=30)
   plt.yticks(fontsize=25)
-  plt.legend(fontsize=18, markerscale=2, bbox_to_anchor=(1, 0.5), loc='center left')
+  plt.legend(fontsize=18, markerscale=1, bbox_to_anchor=(1, 0.5), loc='center left', labels=plot_methods)
   fig.tight_layout()
   fig.savefig(f"{save_dir}/time.png")
   fig.savefig(f"{save_dir}/time.pdf")
