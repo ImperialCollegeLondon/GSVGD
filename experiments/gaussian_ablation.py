@@ -113,7 +113,6 @@ if __name__ == "__main__":
                 print(f"Running GSVGD with eff dim = {eff_dim}")
                 m = args.m
 
-                # m = dim // eff_dim if args.m is None else args.m
                 print("number of projections:", m)
 
                 # sample from variational density

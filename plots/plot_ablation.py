@@ -31,6 +31,7 @@ M_dict = [
   (2, [1, 2, 5, 10, 15, 20, 25]),
   (5, [1, 2, 4, 6, 8, 10])
 ]
+seeds = range(20)
 
 save_dir = f"{basedir}/summary_epoch{args.epochs}_lr{lr}_delta{args.delta}"
 if not os.path.exists(save_dir):
@@ -42,69 +43,81 @@ if __name__ == "__main__":
   print(f"Plotting ablation study on M")
   df_list = []
 
-  ## initialize dirs
-  resdir = f"rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim{dim}"
-  path = f"{resdir}/seed0"
-  path = f"{basedir}/{path}"
+  svgd_metric_sum, s_svgd_metric_sum = 0, 0
 
-  ## load results
-  res_svgd = pickle.load(open(f"{path}/particles_svgd.p", "rb"))
-  svgd = res_svgd["svgd"][0].to(device)
+  for seed in seeds:
+    ## initialize dirs
+    resdir = f"rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim{dim}"
+    path = f"{resdir}/seed{seed}"
+    path = f"{basedir}/{path}"
 
-  res_s_svgd = pickle.load(open(f"{path}/particles_s-svgd.p", "rb"))
-  s_svgd = res_s_svgd["s_svgd"][0].to(device)
-  
-  ## initialize evaluation metric
-  target_dist = torch.load(f'{path}/target_dist.p', map_location=device)
-  target = target_dist.sample((20000,))
-  
-  metric_fn = Metric(metric="energy", x_init=svgd[0].clone(), x_target=target.clone(), 
-    target_dist=target_dist, device=device)
+    ## load results
+    res_svgd = pickle.load(open(f"{path}/particles_svgd.p", "rb"))
+    svgd = res_svgd["svgd"][-1].to(device)
 
-  ## compute metric
-  svgd_metric = metric_fn(svgd)
-  s_svgd_metric = metric_fn(s_svgd)
-
-  for effdim, M_list in M_dict:
-    print("loading m =", effdim, "and M =", M_list)
-
-    ## load gsvgd results
-    gsvgd = {}
-    for M in M_list:
-      res_gsvgd = pickle.load(open(f"{path}/particles_gsvgd_m{effdim}_M{M}.p", "rb"))
-      # gsvgd = {**gsvgd, f"GSVGD{effdim}": res_gsvgd[f"gsvgd_effdim{effdim}"]}
-      gsvgd = res_gsvgd[f"gsvgd_effdim{effdim}"][0].to(device)
-
-      gsvgd_metric = metric_fn(gsvgd)
+    res_s_svgd = pickle.load(open(f"{path}/particles_s-svgd.p", "rb"))
+    s_svgd = res_s_svgd["s_svgd"][-1].to(device)
     
-      df_new = pd.DataFrame(
-        {
-          "metric": gsvgd_metric,
-          "Method": f"GSVGD{effdim}",
-          "M": M,
-          "m": effdim
-        }
-      )
-      df_list.append(df_new)
+    ## initialize evaluation metric
+    target_dist = torch.load(f'{path}/target_dist.p', map_location=device)
+    target = target_dist.sample((20000,))
+    
+    metric_fn = Metric(metric="var", x_init=svgd[0].clone(), x_target=target.clone(), 
+      target_dist=target_dist, device=device)
+
+    ## compute metric
+    svgd_metric_sum += metric_fn(svgd)
+    s_svgd_metric_sum += metric_fn(s_svgd)
+
+    for effdim, M_list in M_dict:
+      # print("loading m =", effdim, "and M =", M_list)
+
+      ## load gsvgd results
+      gsvgd = {}
+      for M in M_list:
+        res_gsvgd = pickle.load(open(f"{path}/particles_gsvgd_m{effdim}_M{M}.p", "rb"))
+        # gsvgd = {**gsvgd, f"GSVGD{effdim}": res_gsvgd[f"gsvgd_effdim{effdim}"]}
+        gsvgd = res_gsvgd[f"gsvgd_effdim{effdim}"][-1].to(device)
+
+        gsvgd_metric = metric_fn(gsvgd)
+      
+        df_new = pd.DataFrame(
+          {
+            "metric": [gsvgd_metric],
+            "Method": [f"GSVGD{effdim}"],
+            "seed": seed,
+            "M": [M],
+            "m": [effdim]
+          }
+        )
+        df_list.append(df_new)
 
 
   ## aggregate results
   metrics_df = pd.concat(df_list, ignore_index=True)
   metrics_df["Coverage"] = metrics_df.M * metrics_df.m / dim
+
+  ## compute mean result for SVGD and S-SVGD
+  svgd_metric_mean = svgd_metric_sum / len(seeds)
+  s_svgd_metric_mean = s_svgd_metric_sum / len(seeds)
   
   ## set legend colours
-  svgd_colors = sns.color_palette("Greens")[2:3]
-  ssvgd_colors = sns.color_palette("light:b")[2:3]
-  gsvgd_colors = sns.color_palette("dark:salmon_r")[:len(M_list)]
-  palatte = svgd_colors + ssvgd_colors + gsvgd_colors
+  svgd_color = sns.color_palette("Greens")[2]
+  ssvgd_color = sns.color_palette("light:b")[2]
+  gsvgd_colors = [sns.color_palette("dark:salmon_r")[i] for i in [0, 2, 4]]
+  palatte = gsvgd_colors
 
   ## plot
   fig = plt.figure(figsize=(12, 6))
+  plt.axhline(y=1, linewidth=3, color="k")
+  plt.axhline(y=svgd_metric_mean, linewidth=2, color=svgd_color, label="SVGD", linestyle="dashed")
+  plt.axhline(y=s_svgd_metric_mean, linewidth=2, color=ssvgd_color, label="S-SVGD", linestyle="dashdot")
   g = sns.lineplot(
     data=metrics_df, 
     x="Coverage", 
     y="metric",
     hue="Method", 
+    style="Method", 
     markers=True,
     markersize=14,
     palette=palatte,
@@ -113,10 +126,10 @@ if __name__ == "__main__":
   # g.set_yscale("log")
   plt.xlabel("Dimension Coverage", fontsize=30)
   plt.xticks(fontsize=25)
-  plt.ylabel("Energy Distance", fontsize=30)
+  plt.ylabel("Variance", fontsize=30)
   plt.yticks(fontsize=25)
-  # plt.legend(fontsize=18, markerscale=1, bbox_to_anchor=(1, 0.5), loc='center left', labels=plot_methods)
-  plt.legend(fontsize=18, markerscale=1)
+  # plt.legend(fontsize=22, markerscale=1.5, bbox_to_anchor=(1, 0.5), loc="center left")
+  plt.legend(fontsize=25, markerscale=1.5, bbox_to_anchor=(0.3, 0.6))
   fig.tight_layout()
   fig.savefig(f"{save_dir}/ablation.png")
   fig.savefig(f"{save_dir}/ablation.pdf")
