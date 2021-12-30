@@ -365,8 +365,6 @@ if __name__ == "__main__":
         particles_epochs = [tup[0] for tup in fitted_method.test_accuracy]
         test_acc = [tup[1] for tup in fitted_method.test_accuracy]
         valid_acc = [tup[1] for tup in fitted_method.valid_accuracy]
-        test_ll = [tup[2] for tup in fitted_method.test_accuracy]
-        valid_ll = [tup[2] for tup in fitted_method.valid_accuracy]
         particles = fitted_method.particles
     else:
         particles_epochs = []
@@ -383,8 +381,6 @@ if __name__ == "__main__":
             **{"epochs": particles_epochs},
             **{"test_accuracy": test_acc},
             **{"valid_accuracy": valid_acc},
-            **{"test_ll": test_ll},
-            **{"valid_ll": valid_ll},
             **{"particles": particles},
             **{"nbatches": len(train_loader)},
             **{"elapsed_time": elapsed_time}
