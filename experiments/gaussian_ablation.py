@@ -80,7 +80,7 @@ if __name__ == "__main__":
 
 
     ## SVGD
-    if args.method == "svgd":
+    if args.method == "SVGD":
         print("Running SVGD")
         # sample from variational density
         x = x_init.clone().to(device)
@@ -105,7 +105,7 @@ if __name__ == "__main__":
 
 
     ## GSVGD
-    if args.method == "gsvgd":
+    elif args.method == "GSVGD":
         res_gsvgd = [0] * len(eff_dims)
         def run_gsvgd(eff_dims):
             for i, eff_dim in enumerate(eff_dims):
@@ -165,7 +165,7 @@ if __name__ == "__main__":
 
 
     ## S-SVGD
-    if args.method == "s_svgd":
+    elif args.method == "S-SVGD":
         print("Running S-SVGD")
         # sample from variational density
         x_init_s_svgd = x_init.clone()

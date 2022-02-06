@@ -43,7 +43,6 @@ resdirs = [
 metrics = [args.metric] # select from the keys of metrics_ylabels below
 metrics_ylabels = {
   "energy": "Energy Distance", 
-  "energy2": "Energy Distance", 
   "mean": "MSE", 
   "squared": "MSE", 
   "cos": "MSE",

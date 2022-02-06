@@ -30,7 +30,6 @@ met = args.metric
 
 metrics_ylabs = {
   "energy": "Energy Distance", 
-  "energy2": "Energy Distance", 
   "mean": "MSE", 
   "squared": "MSE", 
   "cos": "MSE",
