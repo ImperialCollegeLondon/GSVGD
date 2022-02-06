@@ -1,5 +1,4 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,2,3,4,5,6,7"
 import matplotlib.pyplot as plt 
 import seaborn as sns
 import pickle
@@ -9,7 +8,6 @@ import torch
 import argparse
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-# device = "cuda:7"
 
 parser = argparse.ArgumentParser(description='Plotting metrics.')
 parser.add_argument('--exp', type=str, help='Experiment to run')
@@ -52,7 +50,7 @@ if __name__ == "__main__":
         eff_dims = res["effdims"]
         epochs = res["epochs"]
         time = res["elapsed_time"]
-        svgd, s_svgd = time["svgd"], time["maxsvgd"]
+        svgd, s_svgd = time["svgd"], time["s_svgd"]
         gsvgd = {f"GSVGD{d}": time[f"gsvgd_effdim{d}"] for d in eff_dims}
       
         time_dict = {

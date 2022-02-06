@@ -1,5 +1,4 @@
 import os
-# os.environ["CUDA_VISIBLE_DEVICES"] = "0,5,7,2,3,6,1"
 import matplotlib.pyplot as plt 
 import seaborn as sns
 import pickle
@@ -9,8 +8,7 @@ import torch
 from src.diffusion import Diffusion
 import argparse
 
-# device = torch.device("cuda")
-device = "cuda:5"
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser(description='Plotting metrics.')
 parser.add_argument('--exp', type=str, help='Experiment to run')
@@ -33,8 +31,6 @@ basedir = f"{args.root}/{args.exp}"
 resdir = f"rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim{dim}"
 resdir_svgd = f"rbf_epoch{args.epochs}_lr{lr}_delta0.1_n{nparticles}_dim{dim}"
 resdir_ssvgd = f"rbf_epoch{args.epochs}_lr{lr}_delta0.1_n{nparticles}_dim{dim}"
-# resdir_svgd = f"rbf_epoch{args.epochs}_lr0.01_delta0.1_n{nparticles}_dim{dim}"
-# resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.01_delta0.1_n{nparticles}_dim{dim}"
 
 seeds = range(1)
 
@@ -59,15 +55,6 @@ if __name__ == "__main__":
       gsvgd_res = pickle.load(open(f"{path}/particles_gsvgd_effdim{eff_dim}.p", "rb"))
       method_ls.append(gsvgd_res)
       method_names.append(f"GSVGD{eff_dim}")
-    
-    # add initial particles
-    # method_names = ["Initial"] + method_names
-    # initial = {
-    #   "u_true": svgd_res["u_true"],
-    #   "x_true": svgd_res["x_true"],
-    #   "particles": [svgd_res["particles"][0]]
-    # }
-    # method_ls = [initial] + method_ls
 
     # hmc samples
     hmc_res["particles"] = [torch.Tensor(hmc_res["particles"])]
@@ -75,9 +62,9 @@ if __name__ == "__main__":
     method_ls = [hmc_res] + method_ls
         
     # load target distribution
-    target_dist = torch.load(f'{path}/target_dist.p', map_location=device)
+    target_dist = torch.load(f"{path}/target_dist.p", map_location=device)
 
-    subplot_c = 3 # int(np.ceil(np.sqrt(len(method_ls))))
+    subplot_c = 3
     subplot_r = int(np.ceil(len(method_ls) / subplot_c))
 
     fig = plt.figure(figsize=(subplot_c*6, subplot_r*5))
@@ -135,25 +122,10 @@ if __name__ == "__main__":
 
       # plot observations
       plt.subplot(subplot_r, subplot_c, i+1)
-      # plt.scatter(
-      #   time_step[target_dist.loc.cpu().numpy()],
-      #   target_dist.obs.cpu().numpy(),
-      #   color="red",
-      #   s=2*len(method_names)
-      # )
-      # obs_df = pd.DataFrame(
-      #   {"time": time_step[target_dist.loc.cpu().numpy()],
-      #    "solution": target_dist.obs.cpu().squeeze().numpy(),
-      #   }
-      # )
       sns.lineplot(
-        # data=obs_df,
-        # x="time",
-        # y="solution",
         x=time_step[target_dist.loc.cpu().numpy()],
         y=target_dist.obs.cpu().squeeze().numpy(),
         color="red",
-        # join=False,
         linestyle="",
         marker="o",
         markersize=18,
@@ -166,14 +138,10 @@ if __name__ == "__main__":
         y="particles", 
         hue="method", 
         style="method", 
-        # markers=True,
-        # markersize=8,
-        # alpha=1,
         ci=None,
         linewidth=3,
       )
 
-      # plt.fill_between(data=df.loc[(df.method==method_name) & (df.time!=0.95)], 
       plt.fill_between(data=df.loc[df.method==method_name], 
         x="time", y1="lower", y2="upper", alpha=0.2)
       plt.title(method_name, fontsize=42)
@@ -187,15 +155,10 @@ if __name__ == "__main__":
         g.set(xticks=[])
         plt.xlabel(None)
       if i != 0 and i != subplot_c:
-        # g.set(yticks=[])
         plt.ylabel(None)
       if i == 0:
-        # plt.legend(bbox_to_anchor=(0.4, 1.3), loc="upper center", borderaxespad=0., 
-        #   fontsize=20, labels=["Data", "Mean", "True"], ncol=3)
         plt.legend(loc="upper center", borderaxespad=0., 
           fontsize=25, labels=["Data", "Mean", "True"])
-        # plt.legend(bbox_to_anchor=(1.05, 0.9), loc="upper left", borderaxespad=0., 
-        #   fontsize=25, labels=["Data", "Mean", "True"])
       else:
         plt.legend([],[], frameon=False)
       fig.tight_layout()
@@ -214,8 +177,6 @@ if __name__ == "__main__":
         y="particles", 
         hue="method", 
         style="method", 
-        # markers=True,
-        # markersize=8,
         alpha=1,
         ci=None
       )
@@ -232,8 +193,6 @@ if __name__ == "__main__":
       sub_df_all = sub_df_all.sort_values(["method", "time"]).reset_index(drop=True)
       plt.fill_between(data=sub_df_all,
         x="time", y1="lower", y2="upper", alpha=0.2, color=col)
-    # g.set_yscale("log")
-    # g.set_xscale("log")
     plt.xlabel("Time Steps", fontsize=25)
     plt.xticks(fontsize=20)
     plt.ylabel("Solution", fontsize=25)
@@ -304,8 +263,6 @@ if __name__ == "__main__":
         y="particles", 
         hue="method", 
         style="method", 
-        # markers=True,
-        # markersize=8,
         alpha=1,
         ci=None
       )
@@ -316,8 +273,6 @@ if __name__ == "__main__":
         color="red",
         s=2*len(method_names)
       )
-      # g.set_yscale("log")
-      # g.set_xscale("log")
       plt.title(method_name, fontsize=20)
       plt.xlabel("Time Steps", fontsize=25)
       plt.xticks(fontsize=20)
@@ -341,8 +296,6 @@ if __name__ == "__main__":
       y="particles", 
       hue="method", 
       style="method", 
-      # markers=True,
-      # markersize=8,
       alpha=1,
       ci=None
     )
@@ -357,8 +310,6 @@ if __name__ == "__main__":
       sub_df_all = sub_df_all.sort_values(["method", "time"]).reset_index(drop=True)
       plt.fill_between(data=sub_df_all,
         x="time", y1="lower", y2="upper", alpha=0.2, color=col)
-    # g.set_yscale("log")
-    # g.set_xscale("log")
     plt.xlabel("Time Steps", fontsize=25)
     plt.xticks(fontsize=20)
     plt.ylabel("Samples", fontsize=25)
@@ -371,5 +322,3 @@ if __name__ == "__main__":
 
       
     print(f"Saved to {resdir}/particles.pdf")
-
-    

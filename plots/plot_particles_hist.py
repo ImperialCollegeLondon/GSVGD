@@ -25,17 +25,11 @@ noise = "_noise" if args.noise == "True" else ""
 
 basedir = f"{args.root}/{args.exp}"
 resdirs = [
-  # f"rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim10",
-  # f"rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim20",
-  # f"rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim30",
   f"rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim50",
-  # f"rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim70",
-  # f"rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim90",
-  # f"rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim100"
 ]
 resdirs = [f"{s}/seed0" for s in resdirs]
 
-eff_dims = [1, 2, 5] #[1, 2, 5, 10]
+eff_dims = [1, 2, 5]
 
 if __name__ == "__main__":
 
@@ -43,18 +37,19 @@ if __name__ == "__main__":
   for path in resdirs:
     path = f"{basedir}/{path}"
     print(f"Plotting for {path}")
+
     # load results
     res = pickle.load(open(f"{path}/particles.p", "rb"))
-    #target_dist = res["target_dist"]
     eff_dims = res["effdims"]
     epochs = res['epochs']
     target, svgd, s_svgd = res["target"], res["svgd"], res["s_svgd"]
     gsvgd = {s: res[s] for s in [f"gsvgd_effdim{d}" for d in eff_dims]}
+    
     # save last particles in list
     dim = svgd[-1].shape[1]
 
     device = svgd[-1].device
-    target_dist = torch.load(f'{path}/target_dist.p', map_location=device)
+    target_dist = torch.load(f"{path}/target_dist.p", map_location=device)
 
     svgd = [x.to(device) for x in svgd]
     s_svgd = [x.to(device) for x in s_svgd]
@@ -91,8 +86,3 @@ if __name__ == "__main__":
       )
 
     print(f"Saved to ", path + "/xxx_particles_hist.png")
-            
-    
-    
-    
-

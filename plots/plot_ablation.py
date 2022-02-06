@@ -30,7 +30,7 @@ M_dict = [
   (1, [1, 2, 5, 10, 20, 30, 40, 50]),
   (2, [1, 2, 5, 10, 15, 20, 25]),
   (5, [1, 2, 4, 6, 8, 10])
-]
+] # (m, M) pairs
 seeds = range(20)
 
 save_dir = f"{basedir}/summary_epoch{args.epochs}_lr{lr}_delta{args.delta}"
@@ -38,7 +38,6 @@ if not os.path.exists(save_dir):
     os.makedirs(save_dir)
 
 if __name__ == "__main__":
-
 
   print(f"Plotting ablation study on M")
   df_list = []
@@ -59,7 +58,7 @@ if __name__ == "__main__":
     s_svgd = res_s_svgd["s_svgd"][-1].to(device)
     
     ## initialize evaluation metric
-    target_dist = torch.load(f'{path}/target_dist.p', map_location=device)
+    target_dist = torch.load(f"{path}/target_dist.p", map_location=device)
     target = target_dist.sample((20000,))
     
     metric_fn = Metric(metric="var", x_init=svgd[0].clone(), x_target=target.clone(), 
@@ -70,13 +69,10 @@ if __name__ == "__main__":
     s_svgd_metric_sum += metric_fn(s_svgd)
 
     for effdim, M_list in M_dict:
-      # print("loading m =", effdim, "and M =", M_list)
-
       ## load gsvgd results
       gsvgd = {}
       for M in M_list:
         res_gsvgd = pickle.load(open(f"{path}/particles_gsvgd_m{effdim}_M{M}.p", "rb"))
-        # gsvgd = {**gsvgd, f"GSVGD{effdim}": res_gsvgd[f"gsvgd_effdim{effdim}"]}
         gsvgd = res_gsvgd[f"gsvgd_effdim{effdim}"][-1].to(device)
 
         gsvgd_metric = metric_fn(gsvgd)
@@ -121,19 +117,14 @@ if __name__ == "__main__":
     markers=True,
     markersize=14,
     palette=palatte,
-    # legend=False
   )
-  # g.set_yscale("log")
   plt.xlabel("Dimension Coverage", fontsize=30)
   plt.xticks(fontsize=25)
   plt.ylabel("Variance", fontsize=30)
   plt.yticks(fontsize=25)
-  # plt.legend(fontsize=22, markerscale=1.5, bbox_to_anchor=(1, 0.5), loc="center left")
   plt.legend(fontsize=25, markerscale=1.5, bbox_to_anchor=(0.3, 0.6))
   fig.tight_layout()
   fig.savefig(f"{save_dir}/ablation.png")
   fig.savefig(f"{save_dir}/ablation.pdf")
   print("saved to", f"{save_dir}/ablation.png")
     
-  
-

@@ -1,5 +1,4 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "3,4,5,1,7"
 import matplotlib.pyplot as plt 
 import seaborn as sns
 import pickle
@@ -10,7 +9,6 @@ from src.metrics import Metric
 import argparse
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-# device = "cuda:5"
 
 parser = argparse.ArgumentParser(description='Plotting metrics.')
 parser.add_argument('--exp', type=str, help='Experiment to run')
@@ -26,7 +24,6 @@ args = parser.parse_args()
 
 nparticles = args.nparticles
 lr = args.lr
-# noise = "_noise" if args.noise else ""
 
 basedir = f"{args.root}/{args.exp}"
 
@@ -43,11 +40,7 @@ resdirs = [
   f"{args.kernel}_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim100",
 ]
 
-# metrics = ["energy", "mean", "squared", "var", "energy_sub"]
-# metrics_ylabel = ["Energy Distance", "MSE", "MSE", "Variance", "Energy Distance (2D)"]
-# metrics = ["energy"]
-# metrics_ylabel = ["Energy Distance"]
-metrics = [args.metric] # ["energy_sub"]
+metrics = [args.metric] # select from the keys of metrics_ylabels below
 metrics_ylabels = {
   "energy": "Energy Distance", 
   "energy2": "Energy Distance", 
@@ -99,7 +92,7 @@ if __name__ == "__main__":
 
         del res
 
-        target_dist = torch.load(f'{path}/target_dist.p', map_location=device)
+        target_dist = torch.load(f"{path}/target_dist.p", map_location=device)
         target = target_dist.sample((20000, ))
 
         # initialize metric
@@ -135,25 +128,6 @@ if __name__ == "__main__":
     metrics_df = pd.concat(df_list)
     metrics_df = metrics_df.reset_index(drop=True)
 
-    # # 90%-CI
-    # metrics_df["lower"] = np.nan
-    # metrics_df["upper"] = np.nan
-    # for method in method_names:
-    #   for d in metrics_df.dim.unique().tolist():
-    #     # select_ind = (metrics_df.method == method) & (metrics_df.dim == d)
-    #     # subdf = metrics_df[select_ind]
-    #     # quantiles = subdf.metric.quantile([0.05, 0.95]).to_list()
-    #     # metrics_df.loc[select_ind, "lower"] = quantiles[0]
-    #     # metrics_df.loc[select_ind, "upper"] = quantiles[1]
-
-    #     select_ind = (metrics_df.method == method) & (metrics_df.dim == d)
-    #     subdf = metrics_df[select_ind]
-    #     mean = subdf.metric.mean()
-    #     se = subdf.metric.std() / np.sqrt(20)
-    #     metrics_df.loc[select_ind, "lower"] = mean - se
-    #     metrics_df.loc[select_ind, "upper"] = mean + se
-    
-
     # save as csv
     metrics_df.to_csv(
         f"{save_dir}/{met}.csv",
@@ -172,16 +146,7 @@ if __name__ == "__main__":
       style="method", 
       markers=True,
       markersize=18,
-      # legend=False
-      # ci=68
     )
-
-    # # plot 90%-CI
-    # for method in method_names:
-    #   sub_metrics_df = metrics_df.loc[metrics_df.method == method]
-    #   sub_metrics_df = sub_metrics_df.sort_values(["method", "dim"]).reset_index(drop=True)
-    #   plt.fill_between(data=sub_metrics_df, x="dim", y1="lower", y2="upper", alpha=0.2)
-
 
     if met != "var":
       g.set_yscale("log")

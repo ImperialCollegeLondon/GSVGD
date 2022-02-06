@@ -7,7 +7,6 @@ import argparse
 import os
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-device = "cuda:7"
 
 parser = argparse.ArgumentParser(description='Plotting metrics.')
 parser.add_argument('--exp', type=str, help='Experiment to run')
@@ -28,7 +27,6 @@ save_dir = f"{basedir}/summary_epoch{args.epochs}_lr{lr}_delta{args.delta}"
 if not os.path.exists(save_dir):
     os.makedirs(save_dir)
 
-# eff_dims = [1, 2, 5]
 nparticles_list = [5, 10, 20, 50, 100, 150, 200]
 
 if __name__ == "__main__":
@@ -44,9 +42,6 @@ if __name__ == "__main__":
     ssvgd_res = pickle.load(open(f"{basedir}/{ssvgd_resdir}/particles_s-svgd_lrg{args.lr_g}.p", "rb"))
 
     # gsvgd
-    # gsvgd_resdir = f"{basedir}/rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}/seed0"
-    # gsvgd_effdim1_res = pickle.load(open(f"{gsvgd_resdir}/particles_gsvgd_effdim1.p", "rb"))
-
     gsvgd_resdir2 = f"{basedir}/rbf_epoch{args.epochs}_lr0.001_delta0.01_n{nparticles}/seed0"
     gsvgd_effdim2_res = pickle.load(open(f"{gsvgd_resdir2}/particles_gsvgd_effdim2.p", "rb"))
 
@@ -70,9 +65,6 @@ if __name__ == "__main__":
 
   df = pd.concat(df_list)
 
-  # svgd_colors = sns.color_palette("crest")[:4]
-  # gsvgd_colors = sns.color_palette("flare")[:4]
-
   fig = plt.figure(figsize=(12, 6))
   g = sns.lineplot(
     data=df, 
@@ -82,8 +74,6 @@ if __name__ == "__main__":
     style="Method", 
     markers=True,
     markersize=12,
-    # palette=svgd_colors + gsvgd_colors,
-    # hue_order=plot_methods
   )
   # g.set_yscale("log")
   plt.xlabel("Particle Sizes", fontsize=25)
@@ -96,8 +86,3 @@ if __name__ == "__main__":
   fig.savefig(f"{save_dir}/test_accuracy.pdf")
 
   print(f"Saved to ", save_dir + f"/test_accuracy.png")
-  
-  
-  
-  
-

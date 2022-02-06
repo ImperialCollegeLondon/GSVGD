@@ -48,7 +48,7 @@ if __name__ == "__main__":
     method_names = ["SVGD", "S-SVGD"]
     eff_dim_ls = [-1, -1]
 
-    eff_dims = [1, 10, 55] # [1, 2, 5, 10, 20, 30, 40, 50, 55]
+    eff_dims = [1, 10, 55]
     gsvgd_show = "GSVGD5"
     for eff_dim in eff_dims:
       gsvgd_res = pickle.load(open(f"{path}/particles_gsvgd_effdim{eff_dim}.p", "rb"))
@@ -69,7 +69,6 @@ if __name__ == "__main__":
         eff_dims_append = np.repeat(eff_dims, len(iterations)).tolist()
 
       df_new = pd.DataFrame({
-        # "iterations": res["epochs"][1:600][::10], # steps
         "iterations": iterations * rep, # epochs
         "test_accuracy": res["test_accuracy"][:nshow] * rep,
         "valid_accuracy": res["valid_accuracy"][:nshow] * rep,
@@ -82,7 +81,6 @@ if __name__ == "__main__":
       df_list.append(df_new)
 
       # for early stopping
-      df_new = df_new.loc[df_new.iterations <= 8] #? consider first few iterations
       df_new_early_stop = df_new.iloc[[df_new.valid_accuracy.idxmax()]].reset_index(drop=True)
       if "GSVGD" in method_name:
         df_new_early_stop["method"] = "GSVGD"
@@ -105,14 +103,8 @@ if __name__ == "__main__":
       y=metric, 
       hue="method", 
       style="method", 
-      # markers=True,
-      # markersize=8,
-      # alpha=1,
       ci=None
     )
-    # g.set_yscale("log")
-    # g.set_xscale("log")
-    # plt.xlabel("Training Steps", fontsize=25)
     plt.xlabel("Epochs", fontsize=25)
     plt.xticks(fontsize=20)
     plt.ylabel("Test Accuracy", fontsize=25)
@@ -147,7 +139,6 @@ if __name__ == "__main__":
     x="eff_dim",
     y="test_accuracy",
     hue="method",
-    # ci=68#"sd"
   )
   plt.legend(fontsize=16, markerscale=2, bbox_to_anchor=(1, 0.4), loc='center left')
   fig.tight_layout()
@@ -166,9 +157,6 @@ if __name__ == "__main__":
       style="method", 
       ci=None
     )
-    # g.set_yscale("log")
-    # g.set_xscale("log")
-    # plt.xlabel("Training Steps", fontsize=25)
     plt.xlabel("Epochs", fontsize=25)
     plt.xticks(fontsize=20)
     plt.ylabel("Test Loglikelihood", fontsize=25)

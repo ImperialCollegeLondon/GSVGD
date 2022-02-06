@@ -1,5 +1,4 @@
 import os
-# os.environ["CUDA_VISIBLE_DEVICES"] = "1,4,5,6,7"
 import matplotlib.pyplot as plt 
 import seaborn as sns
 import pickle
@@ -28,7 +27,6 @@ noise = "_noise" if bool(args.noise) else ""
 
 basedir = f"{args.root}/{args.exp}"
 resdirs = [
-  # f"{args.kernel}_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim2",
   f"{args.kernel}_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim50",
 ]
 resdirs = [f"{s}/seed0" for s in resdirs]
@@ -41,13 +39,13 @@ if __name__ == "__main__":
     print(f"Plotting for {path}")
     # load results
     res = pickle.load(open(f"{path}/particles.p", "rb"))
-    #target_dist = res["target_dist"]
+
     eff_dims = res["effdims"]
     target, svgd, s_svgd = res["target"], res["svgd"], res["s_svgd"]
     gsvgd = {s: res[s] for s in [f"gsvgd_effdim{d}" for d in eff_dims]}
     dim = svgd[-1].shape[1]
 
-    target_dist = torch.load(f'{path}/target_dist.p', map_location=device)
+    target_dist = torch.load(f"{path}/target_dist.p", map_location=device)
   
     gsvgd_titles = ["GSVGD" + str(i) for i in eff_dims]
     gsvgd_keys = [f"gsvgd_effdim{i}" for i in eff_dims]
@@ -56,7 +54,7 @@ if __name__ == "__main__":
     mix_means = target_dist.sample((10000,)).mean(axis=0)
 
     # methods to be plotted
-    method_names = ["SVGD", "S-SVGD"] + ["GSVGD1"] # [f"GSVGD{d}" for d in eff_dims]
+    method_names = ["SVGD", "S-SVGD"] + ["GSVGD1"]
 
     target_samples = target_dist.sample((10000,)).cpu().numpy()
 
@@ -71,8 +69,8 @@ if __name__ == "__main__":
     }
 
     # plot density
-    subplot_c = len(epochs) # int(np.ceil(np.sqrt(len(final_particles_dict))))
-    subplot_r = len(method_names) # int(np.ceil(len(final_particles_dict) / subplot_c))
+    subplot_c = len(epochs)
+    subplot_r = len(method_names)
 
     dim1, dim2 = 0, 1
     fig = plt.figure(figsize=(subplot_c*3, subplot_r*3))
@@ -84,13 +82,8 @@ if __name__ == "__main__":
         target = final_particles_dict["Target"][t_ind]
         df_target = pd.DataFrame(target[:, [dim1, dim2]], columns=["dim1", "dim2"])
 
-        cut = 22 if method == "SVGD" else 22
+        cut = 22 if method == "SVGD" else 22 # levels for contour plots
         
-        ## density only
-        # sns.kdeplot(
-        #   data=df, x="dim1", y="dim2", fill=True,
-        #   thresh=0, levels=100, cmap="viridis", cut=cut
-        # )
         ## density and particles
         g = plt.subplot(len(method_names), len(epochs), i*len(epochs)+t_ind+1)
         sns.kdeplot(
@@ -107,26 +100,14 @@ if __name__ == "__main__":
         g.set(xlabel=None)
         g.set(ylabel=None)
         g.set(ylim=(-args.xlim, args.xlim), xlim=(-args.xlim, args.xlim))
-        # if i != len(method_names)-1:
-        #   g.set(xticks=[])
-        # if t_ind != 0:
-        #   g.set(yticks=[])
         g.set(xticks=[])
         g.set(yticks=[])
         if t_ind == 0:
           plt.ylabel(method, fontsize=22)
         
-        # plt.xticks(fontsize=15)
-        # plt.yticks(fontsize=15)
         plt.title(f"t = {t*5}", fontsize=22)
     
     fig.tight_layout()
     fig.savefig(path + f"/intermed_particles.{args.format}", dpi=500)
 
-
     print(f"Saved to ", path + "/intermed_particles.png")
-            
-    
-    
-    
-

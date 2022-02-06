@@ -1,5 +1,4 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1,3,4,5,6,7"
 import matplotlib.pyplot as plt 
 import seaborn as sns
 import pickle
@@ -10,7 +9,6 @@ from src.metrics import Metric
 import argparse
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-# device = "cuda:7"
 
 parser = argparse.ArgumentParser(description='Plotting metrics.')
 parser.add_argument('--exp', type=str, help='Experiment to run')
@@ -29,8 +27,6 @@ basedir = f"{args.root}/{args.exp}"
 nparticles_ls = [50, 100, 500, 800]
 dims = range(10, 110, 10)
 
-# metrics = ["energy", "mean", "squared", "var", "energy_sub"]
-# metrics_ylabs = ["Energy Distance", "MSE", "MSE", "Variance", "Energy Distance (2D)"]
 metrics = ["energy", "var"]
 metrics_ylabs = ["Energy Distance", "Variance"]
 
@@ -40,7 +36,6 @@ if not os.path.exists(save_dir):
     os.makedirs(save_dir)
 
 eff_dims = [1, 2, 5]
-# gsvgd_methods = [f"gsvgd_effdim{d}" for d in eff_dims]
 
 if __name__ == "__main__":
 
@@ -63,8 +58,9 @@ if __name__ == "__main__":
         target, svgd, s_svgd = res["target"], res["svgd"], res["s_svgd"]
         gsvgd = {s: res[s] for s in [f"gsvgd_effdim{d}" for d in eff_dims]}
 
-        target_dist = torch.load(f'{path}/target_dist.p', map_location=device)
+        target_dist = torch.load(f"{path}/target_dist.p", map_location=device)
         target = target_dist.sample((10000,))
+
         # initialize metric
         if met == "cos":
           w = torch.normal(torch.zeros(dim, device=device), torch.ones(dim, device=device)).reshape((1, -1))
@@ -78,7 +74,6 @@ if __name__ == "__main__":
         # compute metric for the final iteration
         svgd_metrics = [metric_fn(x.to(device)) for x in svgd[-1:]]
         s_svgd_metrics = [metric_fn(x.to(device)) for x in s_svgd[-1:]]
-        # gsvgd_metrics = [[metric_fn(x.to(device)) for x in gsvgd[s]][-1:] for s in gsvgd.keys()]
         gsvgd_metrics = {
           f"GSVGD{d}": [metric_fn(x.to(device)) for x in gsvgd[f"gsvgd_effdim{d}"]][-1:] for d in eff_dims}
         
@@ -105,13 +100,11 @@ if __name__ == "__main__":
         [f"S-SVGD-{n}" for n in nparticles_ls] + \
         [f"GSVGD1-{n}" for n in nparticles_ls]
     metrics_df = metrics_df_orig.loc[metrics_df_orig.Method.isin(plot_methods), :]
-    # metrics_df = metrics_df_orig
-    # metrics_df.sort_values("Method", inplace=True)
+
     svgd_colors = sns.color_palette("Greens")[2:len(nparticles_ls)+2]
     ssvgd_colors = sns.color_palette("light:b")[2:len(nparticles_ls)+2]
     gsvgd_colors = sns.color_palette("dark:salmon_r")[:len(nparticles_ls)]
     palatte = svgd_colors + ssvgd_colors + gsvgd_colors
-    # palatte = ssvgd_colors + gsvgd_colors
 
     fig = plt.figure(figsize=(12, 6))
     if met == "var":

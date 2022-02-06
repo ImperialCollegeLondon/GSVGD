@@ -1,6 +1,5 @@
 
 import os
-# os.environ["CUDA_VISIBLE_DEVICES"] = "6,7,2,3,4,5,1,0"
 import matplotlib.pyplot as plt 
 import seaborn as sns
 import pickle
@@ -10,8 +9,7 @@ import torch
 from src.diffusion import Diffusion
 import argparse
 
-device = torch.device("cuda")
-# device = "cuda:5"
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser(description='Plotting metrics.')
 parser.add_argument('--exp', type=str, help='Experiment to run')
@@ -36,8 +34,7 @@ resdir_svgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.01_n{nparticles}"
 resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.01_n{nparticles}"
 resdir_hmc = resdir
 
-seeds = range(5) #TODO
-# var_ind_ls = range(10)
+seeds = range(5)
 np.random.seed(1)
 var_ind_ls = np.random.choice(range(55), size=5, replace=False) # 55 features for covertype
 
@@ -65,12 +62,12 @@ if __name__ == "__main__":
       method_names.append(f"GSVGD{eff_dim}")
         
     # load target distribution
-    target_dist = torch.load(f'{path}/target_dist.p', map_location=device)
+    target_dist = torch.load(f"{path}/target_dist.p", map_location=device)
     data = torch.load(f'{path}/data.p', map_location=device)
     _, _, acc_hmc, _ = target_dist.evaluation(particles_hmc, data["X_test"].cpu(), data["y_test"].cpu())
     print("HMC test accuracy:", acc_hmc)
 
-    subplot_c = 3 # int(np.ceil(np.sqrt(len(method_ls))))
+    subplot_c = 3
     subplot_r = int(np.ceil(len(method_ls) / subplot_c))
 
     for var_ind in var_ind_ls:
@@ -115,21 +112,12 @@ if __name__ == "__main__":
           x="particles",
           hue="method"
         )
-        # sns.histplot(
-        #   data=df,
-        #   x="particles",
-        #   hue="method",
-        #   kde=True,
-        #   stat="density",
-        #   common_norm=False
-        # )
 
         plt.title(method_name, fontsize=20)
         plt.xlabel("Time Steps", fontsize=25)
         plt.xticks(fontsize=20)
         plt.ylabel("Solution", fontsize=25)
         plt.yticks(fontsize=20)
-        # plt.xlim(0, 1)
         if i == 1:
           plt.legend(bbox_to_anchor=(0.5, 1.3), loc="upper center", borderaxespad=0., 
             fontsize=25, labels=["HMC", "Method"], ncol=2)
@@ -139,5 +127,5 @@ if __name__ == "__main__":
 
       fig_name = f"{basedir}/{resdir}/seed{seed}/var_{var_ind}.png"
       fig.savefig(fig_name)
-      # fig.savefig(f"{basedir}/{resdir}/seed{seed}/var_{var_ind}.pdf")
+
       print("saved to", fig_name)

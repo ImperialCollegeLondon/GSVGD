@@ -73,7 +73,7 @@ if __name__ == "__main__":
 
       del res
 
-      target_dist = torch.load(f'{path}/target_dist.p', map_location=device)
+      target_dist = torch.load(f"{path}/target_dist.p", map_location=device)
       target = target_dist.sample((10000,))
 
       # initialize metric
@@ -150,7 +150,7 @@ if __name__ == "__main__":
   #       gsvgd_keys = list(gsvgd.keys())
   #       gsvgd_final = {s: gsvgd[s][-1].to(device) for s in gsvgd_keys}
 
-  #       target_dist = torch.load(f'{path}/target_dist.p', map_location=device)
+  #       target_dist = torch.load(f"{path}/target_dist.p", map_location=device)
   #       target = target_dist.sample((svgd[0].shape[0],))
 
   #       # initialize metric

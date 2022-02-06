@@ -1,14 +1,11 @@
 import os
-# os.environ["CUDA_VISIBLE_DEVICES"] = "6,7,2,3,4,5,1,0"
 import matplotlib.pyplot as plt 
 import pickle
 import numpy as np
 import torch
 import argparse
 
-
-device = torch.device("cuda")
-# device = "cuda:5"
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser(description='Plotting metrics.')
 parser.add_argument('--exp', type=str, help='Experiment to run')
@@ -30,11 +27,10 @@ noise = "_noise" if args.noise=="True" else ""
 basedir = f"{args.root}/{args.exp}"
 resdir = f"rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}"
 resdir_svgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.01_n{nparticles}"
-# resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.01_n{nparticles}"
-resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.01_n{nparticles}" #TODO
+resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.01_n{nparticles}"
 resdir_hmc = resdir
 
-seeds = range(1) #TODO
+seeds = range(1)
 
 if __name__ == "__main__":
 
@@ -54,22 +50,22 @@ if __name__ == "__main__":
     method_ls = [hmc_res, svgd_res, ssvgd_res]
     method_names = ["HMC", "SVGD", "S-SVGD"]
 
-    eff_dims = [1, 10, 50] # [1, 2, 5, 10, 20, 30, 40, 50, 55] #TODO
+    eff_dims = [1, 10, 50]
     for eff_dim in eff_dims:
       gsvgd_res = pickle.load(open(f"{path}/particles_gsvgd_effdim{eff_dim}.p", "rb"))
       method_ls.append(gsvgd_res)
       method_names.append(f"GSVGD{eff_dim}")
         
     # load target distribution
-    target_dist = torch.load(f'{path}/target_dist.p', map_location=device)
+    target_dist = torch.load(f"{path}/target_dist.p", map_location=device)
     data = torch.load(f'{path}/data.p', map_location=device)
 
-    subplot_c = 3 # int(np.ceil(np.sqrt(len(method_ls))))
+    subplot_c = 3
     subplot_r = int(np.ceil(len(method_ls) / subplot_c))
 
 
-    fig = plt.figure(figsize=(subplot_c*6, subplot_r*5))
     ## plot solutions
+    fig = plt.figure(figsize=(subplot_c*6, subplot_r*5))
     for i, (res, method_name) in enumerate(zip(method_ls, method_names)):
       print("Loading", method_name)
 
@@ -84,7 +80,6 @@ if __name__ == "__main__":
       print(i, method_name)
       plt.subplot(subplot_r, subplot_c, i+1)
       plt.imshow(cov_matrix, vmin=-5, vmax=8)
-      # plt.imshow(cov_matrix, vmin=-3, vmax=3)
       plt.xticks(fontsize=35)
       plt.yticks(fontsize=35)
       plt.title(method_name, fontsize=42)
@@ -97,4 +92,3 @@ if __name__ == "__main__":
     fig.savefig(fig_name + ".png")
     fig.savefig(fig_name + ".pdf")
     print("saved to", fig_name)
-

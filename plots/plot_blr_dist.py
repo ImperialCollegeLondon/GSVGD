@@ -1,6 +1,5 @@
 import os
-# os.environ["CUDA_VISIBLE_DEVICES"] = "6,7,2,3,4,5,1,0"
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 import seaborn as sns
 import pickle
 import numpy as np
@@ -9,9 +8,11 @@ import torch
 import argparse
 from geomloss import SamplesLoss
 
+def cov_mat(x):
+  """Compute the (dim, dim) sample cov matrix of a Tensor of shape (n, dim)"""
+  return np.cov(x.T)
 
-device = torch.device("cuda")
-# device = "cuda:5"
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser(description='Plotting metrics.')
 parser.add_argument('--exp', type=str, help='Experiment to run')
@@ -33,11 +34,10 @@ noise = "_noise" if args.noise=="True" else ""
 basedir = f"{args.root}/{args.exp}"
 resdir = f"rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}"
 resdir_svgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.01_n{nparticles}"
-# resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.01_n{nparticles}"
-resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.01_n{nparticles}" #TODO
+resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.01_n{nparticles}"
 resdir_hmc = resdir
 
-seeds = range(5) #TODO
+seeds = range(5)
 
 if __name__ == "__main__":
 
@@ -53,25 +53,24 @@ if __name__ == "__main__":
     ssvgd_res = pickle.load(open(f"{path_ssvgd}/particles_s-svgd_lrg{args.lr_g}.p", "rb"))
     hmc_res = pickle.load(open(f"{path_hmc}/particles_hmc.p", "rb"))
     particles_hmc = hmc_res["particles"].cpu()
-    cov_hmc = np.cov(particles_hmc.T) # cov matrix #TODO
-    # cov_hmc = cov_mat(particles_hmc)
+    cov_hmc = cov_mat(particles_hmc)
     
     method_ls = [svgd_res, ssvgd_res]
     method_names = ["SVGD", "S-SVGD"]
 
-    eff_dims = [1, 2, 5, 10, 20, 30, 40, 50, 55] #TODO
+    eff_dims = [1, 2, 5, 10, 20, 30, 40, 50, 55]
     for eff_dim in eff_dims:
       gsvgd_res = pickle.load(open(f"{path}/particles_gsvgd_effdim{eff_dim}.p", "rb"))
       method_ls.append(gsvgd_res)
       method_names.append(f"GSVGD{eff_dim}")
         
     # load target distribution
-    target_dist = torch.load(f'{path}/target_dist.p', map_location=device)
+    target_dist = torch.load(f"{path}/target_dist.p", map_location=device)
     data = torch.load(f'{path}/data.p', map_location=device)
     _, _, acc_hmc, _ = target_dist.evaluation(particles_hmc, data["X_test"].cpu(), data["y_test"].cpu())
     print("HMC test accuracy:", acc_hmc)
 
-    subplot_c = 3 # int(np.ceil(np.sqrt(len(method_ls))))
+    subplot_c = 3
     subplot_r = int(np.ceil(len(method_ls) / subplot_c))
 
     ## plot solutions
@@ -88,8 +87,7 @@ if __name__ == "__main__":
       energy_dist = energy(particles_hmc, particles).item()
 
       # cov matrix
-      cov_matrix = np.cov(particles.T) # TODO
-      # cov_matrix = cov_mat(particles)
+      cov_matrix = cov_mat(particles)
       l2_dist = np.sqrt(np.sum((cov_matrix - cov_hmc)**2))
       l2_diag_dist = np.sqrt(np.sum(np.diag(cov_matrix - cov_hmc)**2))
 
@@ -144,7 +142,7 @@ if __name__ == "__main__":
 
     plt.xlabel("Projection Dimension", fontsize=38)
     plt.xticks(fontsize=32)
-    ylab_fontsize = 38 # if metric == "Covariance Error" else 40
+    ylab_fontsize = 38
     plt.ylabel(metric, fontsize=ylab_fontsize)
     plt.yticks(fontsize=32)
     plt.legend(fontsize=28, loc="center right")

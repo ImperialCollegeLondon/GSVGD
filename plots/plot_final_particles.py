@@ -1,5 +1,4 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1,4,5,6,7"
 import matplotlib.pyplot as plt 
 import seaborn as sns
 import pickle
@@ -28,15 +27,6 @@ noise = "_noise" if bool(args.noise) else ""
 
 basedir = f"{args.root}/{args.exp}"
 resdirs = [
-  # f"{args.kernel}_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim10",
-  # f"{args.kernel}_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim20",
-  # f"{args.kernel}_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim30",
-  # f"{args.kernel}_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim40",
-  # f"{args.kernel}_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim50",
-  # f"{args.kernel}_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim60",
-  # f"{args.kernel}_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim70",
-  # f"{args.kernel}_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim80",
-  # f"{args.kernel}_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim90",
   f"{args.kernel}_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim100",
 ]
 resdirs = [f"{s}/seed0" for s in resdirs]
@@ -49,14 +39,14 @@ if __name__ == "__main__":
     print(f"Plotting for {path}")
     # load results
     res = pickle.load(open(f"{path}/particles.p", "rb"))
-    #target_dist = res["target_dist"]
+
     eff_dims = res["effdims"]
     target, svgd, s_svgd = res["target"], res["svgd"], res["s_svgd"]
     gsvgd = {s: res[s] for s in [f"gsvgd_effdim{d}" for d in eff_dims]}
-    # save last particles in list
+
     dim = svgd[-1].shape[1]
 
-    target_dist = torch.load(f'{path}/target_dist.p', map_location=device)
+    target_dist = torch.load(f"{path}/target_dist.p", map_location=device)
   
     gsvgd_titles = ["GSVGD" + str(i) for i in eff_dims]
     gsvgd_keys = [f"gsvgd_effdim{i}" for i in eff_dims]
@@ -67,7 +57,6 @@ if __name__ == "__main__":
 
     # mean vector for padding
     mix_means = target_dist.sample((10000,)).mean(axis=0)
-
 
     method_names = ["Target", "SVGD", "S-SVGD"] + [f"GSVGD{d}" for d in eff_dims]
 
@@ -93,13 +82,8 @@ if __name__ == "__main__":
       df_target = pd.DataFrame(target[:, [dim1, dim2]], columns=["dim1", "dim2"])
 
       g = plt.subplot(2, subplot_c, i+1)
-      cut = 22 if method == "SVGD" else 22
-      
-      ## density only
-      # sns.kdeplot(
-      #   data=df, x="dim1", y="dim2", fill=True,
-      #   thresh=0, levels=100, cmap="viridis", cut=cut
-      # )
+      cut = 22 if method == "SVGD" else 22 # levels for contour plots
+  
       ## density and particles
       sns.kdeplot(
         data=df_target, 
@@ -127,10 +111,4 @@ if __name__ == "__main__":
     fig.tight_layout()
     fig.savefig(path + f"/final_particles.{args.format}", dpi=500)
 
-
     print(f"Saved to ", path + "/final_particles.png")
-            
-    
-    
-    
-

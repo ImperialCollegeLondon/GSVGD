@@ -8,7 +8,6 @@ import argparse
 import os
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-device = "cuda:7"
 
 parser = argparse.ArgumentParser(description='Plotting metrics.')
 parser.add_argument('--exp', type=str, help='Experiment to run')
