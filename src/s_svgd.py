@@ -1,12 +1,3 @@
-import sys
-import os
-import argparse
-
-# cwd=os.getcwd()
-# cwd_parent=os.path.abspath('.')
-# sys.path.append(cwd)
-# sys.path.append(cwd_parent+'/Divergence')
-# sys.path.append(cwd_parent)
 import torch
 from tqdm import tqdm, trange
 from src.Sliced_KSD_Clean.Util import *
@@ -136,9 +127,6 @@ class SlicedSVGD:
           print(f"Epoch {ep} batch {ep} accuracy:", acc)
 
     return samples, self.metrics
-
-
-
 
 
 class SlicedSVGDLR(SlicedSVGD):
