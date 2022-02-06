@@ -38,10 +38,9 @@ parser.add_argument('--method', type=str, default="all", help='which method to u
 args = parser.parse_args()
 dim = args.dim
 lr = args.lr
-lr_gsvgd = args.lr # 0.1 #! hard coded
+lr_gsvgd = args.lr
 delta = args.delta
 T = args.T
-# lr_g = args.lr_g
 nparticles = args.nparticles
 epochs = args.epochs
 seed = args.seed

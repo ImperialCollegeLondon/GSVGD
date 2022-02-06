@@ -57,7 +57,6 @@ print(f"Running for lr: {lr}, nparticles: {nparticles}")
 
 device = torch.device(f"cuda:{args.gpu}" if args.gpu != -1 else "cuda")
 
-
 results_folder = f"./res/blr{args.suffix}/{args.kernel}_epoch{epochs}_lr{lr}_delta{delta}_n{nparticles}"
 results_folder = f"{results_folder}/seed{seed}"
 
@@ -67,8 +66,6 @@ if not os.path.exists(results_folder):
 if args.kernel == "rbf":
     Kernel = RBF
     BatchKernel = BatchRBF
-# elif args.kernel == "imq":
-#     Kernel = IMQ
 
 if __name__ == "__main__":
     print(f"Device: {device}")
@@ -142,19 +139,12 @@ if __name__ == "__main__":
 
     # split the dataset into training and testing
     if args.data in ["arcene", "debug"]:
-        # X_train = X_input[:100, :]
-        # y_train = y_input[:100, :]
-        # X_test = X_input[100:, :]
-        # y_test = y_input[100:, :]
         X_train, X_test, y_train, y_test = train_test_split(
             X_input, y_input, test_size=0.2, random_state=seed
         )
         X_train, X_valid, y_train, y_valid = train_test_split(
             X_train, y_train, test_size=0.2, random_state=seed
         )
-        #! hard coded
-        # X_valid = X_test
-        # y_valid = y_test
         print("train prevalence:", (y_train == 1).sum() / y_train.shape[0])
         print("valid prevalence:", (y_valid == 1).sum() / y_valid.shape[0])
 
@@ -185,7 +175,7 @@ if __name__ == "__main__":
 
 
     ## target density
-    a0, b0 = 1.0, 0.01  # hyper-parameters
+    a0, b0 = 1.0, 0.01 # hyper-parameters
     distribution = BayesianLR(X_train, y_train, a0, b0)
 
     # initialization
@@ -227,8 +217,6 @@ if __name__ == "__main__":
         kernel_gsvgd = BatchKernel(method="med_heuristic")
         optimizer = optim.Adam([x_gsvgd], lr=lr)
         manifold = Grassmann(D, eff_dim)
-        # U = torch.eye(D).requires_grad_(True).to(device) #! hard coded
-        # U = U[:, :(m*eff_dim)]
         U = torch.nn.init.orthogonal_(
             torch.empty(D, m*eff_dim)
         ).requires_grad_(True).to(device)
@@ -295,10 +283,6 @@ if __name__ == "__main__":
                 numpyro.sample(
                     "Y", npr_dist.Bernoulli(logits=logits), obs=Y[idx]
                 )
-            # logits = X @ w
-            # numpyro.sample(
-            #     "Y", npr_dist.Bernoulli(logits=logits), obs=Y
-            # )
 
         def run_inference(model, rng_key, Y, X, a0, b0, dim, subsample_size):
             if subsample_size == None:
@@ -343,12 +327,11 @@ if __name__ == "__main__":
         # set random seeds for HMC
         rng_key, rng_key_predict = random.split(random.PRNGKey(0))
         Y = jnp.array(y_train.cpu()).reshape((-1,))
+        Y = Y.at[Y == -1].set(0.) # change labels from {-1, 1} to {0, 1}
         X = jnp.array(X_train.cpu())
-        # change labels from {-1, 1} to {0, 1}
-        Y = Y.at[Y == -1].set(0.)
-        print(jnp.unique(Y))
         print("shape of input data to NUTS:", X.shape, "\nD:", D)
         print("To be saved to:", results_folder + f"/particles_hmc.p")
+        
         subsample_size = None if args.subsample_size == 0 else args.subsample_size
         particles_dict, elapsed_time, hmc_res = run_inference(
             model, rng_key, Y, X, a0, b0, D-1, subsample_size=subsample_size)
@@ -371,9 +354,6 @@ if __name__ == "__main__":
         test_acc = [test_acc]
         valid_acc = []
         particles = theta
-
-        # save HMC results
-        # pickle.dump(hmc_res, open(results_folder + f"/hmc.p", "wb"))
 
     print("saved to ", results_folder + f"/particles_{method_name}.p")
     pickle.dump(

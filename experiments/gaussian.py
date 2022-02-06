@@ -38,10 +38,9 @@ parser.add_argument('--method', type=str, default="all", help='which method to u
 args = parser.parse_args()
 dim = args.dim
 lr = args.lr
-lr_gsvgd = args.lr # 0.1 #! hard coded
+lr_gsvgd = args.lr
 delta = args.delta
 T = args.T
-# lr_g = args.lr_g
 nparticles = args.nparticles
 epochs = args.epochs
 seed = args.seed
@@ -62,8 +61,6 @@ if not os.path.exists(results_folder):
 if args.kernel == "rbf":
     Kernel = RBF
     BatchKernel = BatchRBF
-# elif args.kernel == "imq":
-#     Kernel = IMQ
 
 if __name__ == "__main__":
     print(f"Device: {device}")
@@ -109,9 +106,8 @@ if __name__ == "__main__":
     def run_gsvgd(eff_dims):
         for i, eff_dim in enumerate(eff_dims):
             print(f"Running GSVGD with eff dim = {eff_dim}")
-            m = min(20, dim // eff_dim) if args.m is None else args.m
 
-            # m = dim // eff_dim if args.m is None else args.m
+            m = min(20, dim // eff_dim) if args.m is None else args.m
             print("number of projections:", m)
 
             # sample from variational density
@@ -124,9 +120,6 @@ if __name__ == "__main__":
             manifold = Grassmann(dim, eff_dim)
             U = torch.eye(dim).requires_grad_().to(device)
             U = U[:, :(m*eff_dim)]
-            # U = torch.nn.init.orthogonal_(
-            #     torch.empty(dim, m*eff_dim)
-            # ).requires_grad_(True).to(device)
 
             gsvgd = FullGSVGDBatch(
                 target=distribution,

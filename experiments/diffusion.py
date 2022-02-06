@@ -50,8 +50,6 @@ save_every = args.save_every  # save metric values every 100 epochs
 print(f"Running for lr: {lr}, nparticles: {nparticles}")
 
 device = torch.device(f"cuda:{args.gpu}" if args.gpu != -1 else "cpu")
-# device = torch.device(f"cuda" if args.gpu != -1 else "cpu")
-
 
 results_folder = f"./res/diffusion{args.suffix}/{args.kernel}_epoch{epochs}_lr{lr}_delta{delta}_n{nparticles}_dim{dim}"
 results_folder = f"{results_folder}/seed{seed}"
@@ -62,9 +60,6 @@ if not os.path.exists(results_folder):
 if args.kernel == "rbf":
     Kernel = RBF
     BatchKernel = BatchRBF
-# elif args.kernel == "imq":
-#     Kernel = IMQ
-
 
 if __name__ == "__main__":
     print(f"Device: {device}")
@@ -111,39 +106,20 @@ if __name__ == "__main__":
 
     elif args.method == "gsvgd":
         eff_dim = args.effdim
-
         print(f"Running GSVGD with eff dim = {eff_dim}")
-        # m = min(dim, 20) // eff_dim
-        m = min(20, dim // eff_dim)
         
-        #! hacked
-        # m = dim // eff_dim
-        # m = max(min(50, dim) // eff_dim, 1)
+        m = min(20, dim // eff_dim)
         print("number of projections:", m)
 
         # sample from variational density
         x_gsvgd = x0.clone().requires_grad_()
 
-        # kernel_gsvgd = Kernel(method="med_heuristic")
         kernel_gsvgd = BatchKernel(method="med_heuristic")
         optimizer = optim.Adam([x_gsvgd], lr=lr)
         manifold = Grassmann(dim, eff_dim)
         U = torch.eye(dim).requires_grad_(True).to(device)
         U = U[:, :(m*eff_dim)]
-        # U = torch.nn.init.orthogonal_(
-        #     torch.empty(dim, m*eff_dim)
-        # ).requires_grad_(True).to(device)
 
-        # gsvgd = FullGSVGD(
-        #     target=distribution,
-        #     kernel=kernel_gsvgd,
-        #     manifold=manifold,
-        #     optimizer=optimizer,
-        #     delta=delta,
-        #     T=T,
-        #     device=device,
-        #     noise=add_noise
-        # )
         gsvgd = FullGSVGDBatch(
             target=distribution,
             kernel=kernel_gsvgd,

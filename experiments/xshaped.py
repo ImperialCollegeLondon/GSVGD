@@ -75,7 +75,6 @@ save_every = args.save_every
 print(f"Running for dim: {dim}, lr: {lr}, nparticles: {nparticles}")
 
 device = torch.device(f'cuda:{args.gpu}' if args.gpu != -1 else 'cpu')
-# device = torch.device("cuda")
 
 metric = args.metric
 
@@ -88,8 +87,6 @@ if not os.path.exists(results_folder):
 if args.kernel == "rbf":
     Kernel = RBF
     BatchKernel = BatchRBF
-# elif args.kernel == "imq":
-#     Kernel = IMQ
 
 if __name__ == "__main__":
     print(f"Device: {device}")
@@ -109,7 +106,6 @@ if __name__ == "__main__":
     x_target = distribution.sample((nparticles, ))
     # sample from variational density
     x_init = torch.randn(nparticles, *distribution.event_shape, device=device)
-    # x_init[:, 2:] = (x_init[2:, 2:] - 2) / np.sqrt(2)
     # initialize metric
     metric_fn = Metric(metric=metric, x_init=x_init.clone, x_target=x_target)
 
@@ -143,9 +139,8 @@ if __name__ == "__main__":
         def run_gsvgd(eff_dims):
             for i, eff_dim in enumerate(eff_dims):
                 print(f"Running GSVGD with eff dim = {eff_dim}")
-                m = min(20, dim // eff_dim) if args.m is None else args.m
 
-                # m = dim // eff_dim if args.m is None else args.m
+                m = min(20, dim // eff_dim) if args.m is None else args.m
                 print("number of projections:", m)
 
                 # sample from variational density
@@ -157,9 +152,6 @@ if __name__ == "__main__":
                 manifold = Grassmann(dim, eff_dim)
                 U = torch.eye(dim, device=device).requires_grad_(True)
                 U = U[:, :(m*eff_dim)]
-                # U = torch.nn.init.orthogonal_(
-                #     torch.empty(dim, m*eff_dim, device=device)
-                # ).requires_grad_(True)
 
                 gsvgd = FullGSVGDBatch(
                     target=distribution,
@@ -192,7 +184,6 @@ if __name__ == "__main__":
                     "init":x_init_gsvgd, "final":x_gsvgd, "metric":metric_gsvgd, 
                     "fig":fig_gsvgd, "particles":gsvgd.particles, "pam":gsvgd.pam, "res": gsvgd,
                     "elapsed_time": elapsed_time}
-                    # "alpha_tup":gsvgd.alpha_tup, "pamrf":gsvgd.pamrf}
             return res_gsvgd
 
         res_gsvgd = run_gsvgd(eff_dims)
@@ -229,21 +220,6 @@ if __name__ == "__main__":
 
 
     ## save results and figs
-    # particle-averaged magnitudes
-    # pam = {
-    #     **{"svgd": svgd.pam},
-    #     **{f"gsvgd_effdim{d}": r["pam"] for d, r in zip(eff_dims, res_gsvgd)},
-    #     **{"s_svgd": s_svgd.pam},
-    # }
-    # pamrf = {
-    #     **{"svgd": svgd.pamrf},
-    #     **{f"gsvgd_effdim{d}": r["pamrf"] for d, r in zip(eff_dims, res_gsvgd)},
-    #     **{"s_svgd": s_svgd.pamrf},
-    # }
-    # alpha_tup = {
-    #     **{f"gsvgd_effdim{d}": r["alpha_tup"] for d, r in zip(eff_dims, res_gsvgd)}
-    # }
-
     # time
     elapsed_time = {
         **{"svgd": elapsed_time_svgd},
@@ -260,18 +236,7 @@ if __name__ == "__main__":
             **{"target": x_target.cpu()},
             **{"svgd": svgd.particles},
             **{f"gsvgd_effdim{d}": r["particles"] for d, r in zip(eff_dims, res_gsvgd)},
-            # **{f"proj_gsvgd_effdim{d}": r["res"].U_list for d, r in zip(eff_dims, res_gsvgd)},
-            # **{f"phi_gsvgd_effdim{d}": r["res"].phi_list for d, r in zip(eff_dims, res_gsvgd)},
-            # **{f"repulsion_gsvgd_effdim{d}": r["res"].repulsion_list for d, r in zip(eff_dims, res_gsvgd)},
-            # **{f"score_gsvgd_effdim{d}": r["res"].score_list for d, r in zip(eff_dims, res_gsvgd)},
-            # **{f"k_gsvgd_effdim{d}": r["res"].k_list for d, r in zip(eff_dims, res_gsvgd)},
             **{"s_svgd": s_svgd.particles},
-            # **{"proj_s_svgd": s_svgd.g},
-            # **{"phi_s_svgd": s_svgd.phi_list},
-            # **{"repulsion_s_svgd": s_svgd.repulsion_list},
-            # **{"pam": pam},
-            # **{"pamrf": pamrf},
-            # **{"alpha_tup": alpha_tup}
             **{"elapsed_time": elapsed_time}
         },
         open(results_folder + "/particles.p", "wb")
