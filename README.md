@@ -1,6 +1,7 @@
 # GSVGD
 
 [![Test](https://github.com/harrisonzhu508/M-SVGD/actions/workflows/tests.yml/badge.svg)](https://github.com/harrisonzhu508/M-SVGD/actions/workflows/tests.yml)
+[![License: CC BY 4.0](https://licensebuttons.net/l/by/4.0/80x15.png)](https://creativecommons.org/licenses/by/4.0/)
 
 
 <!-- [![Test](./thumbnail/summary.pdf)](./thumbnail/summary.pdf) -->
