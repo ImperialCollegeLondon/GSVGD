@@ -2,8 +2,6 @@
 
 [![Test](https://github.com/harrisonzhu508/M-SVGD/actions/workflows/tests.yml/badge.svg)](https://github.com/harrisonzhu508/M-SVGD/actions/workflows/tests.yml)
 
-
-<!-- [![Test](./thumbnail/summary.pdf)](./thumbnail/summary.pdf) -->
 [![Test](./thumbnail/summary.png)](./thumbnail/summary.png)
 
 ## Data
