@@ -38,10 +38,9 @@ parser.add_argument('--method', type=str, default="all", help='which method to u
 args = parser.parse_args()
 dim = args.dim
 lr = args.lr
-lr_gsvgd = args.lr # 0.1 #! hard coded
+lr_gsvgd = args.lr
 delta = args.delta
 T = args.T
-# lr_g = args.lr_g
 nparticles = args.nparticles
 epochs = args.epochs
 seed = args.seed
@@ -62,8 +61,6 @@ if not os.path.exists(results_folder):
 if args.kernel == "rbf":
     Kernel = RBF
     BatchKernel = BatchRBF
-# elif args.kernel == "imq":
-#     Kernel = IMQ
 
 if __name__ == "__main__":
     print(f"Device: {device}")
@@ -83,112 +80,109 @@ if __name__ == "__main__":
 
 
     ## SVGD
-    print("Running SVGD")
-    # sample from variational density
-    x = x_init.clone().to(device)
-    kernel = Kernel(method="med_heuristic")
-    svgd = SVGD(distribution, kernel, optim.Adam([x], lr=lr), device=device)
-    start = time.time()
-    svgd.fit(x, epochs, verbose=True, save_every=save_every)
-    elapsed_time_svgd = time.time() - start
+    if args.method in ["SVGD", "all"]:
+        print("Running SVGD")
+        # sample from variational density
+        x = x_init.clone().to(device)
+        kernel = Kernel(method="med_heuristic")
+        svgd = SVGD(distribution, kernel, optim.Adam([x], lr=lr), device=device)
+        start = time.time()
+        svgd.fit(x, epochs, verbose=True, save_every=save_every)
+        elapsed_time_svgd = time.time() - start
 
-    # plot particles
-    fig_svgd = plot_particles(
-        x_init.detach(), 
-        x.detach(), 
-        distribution, 
-        d=6.0, 
-        step=0.1, 
-        concat=means[2:],
-        savedir=results_folder + f"/svgd.png"
-    )
+        # plot particles
+        fig_svgd = plot_particles(
+            x_init.detach(), 
+            x.detach(), 
+            distribution, 
+            d=6.0, 
+            step=0.1, 
+            concat=means[2:],
+            savedir=results_folder + f"/svgd.png"
+        )
 
 
     ## GSVGD
-    res_gsvgd = [0] * len(eff_dims)
-    def run_gsvgd(eff_dims):
-        for i, eff_dim in enumerate(eff_dims):
-            print(f"Running GSVGD with eff dim = {eff_dim}")
-            m = min(20, dim // eff_dim) if args.m is None else args.m
+    if args.method in ["GSVGD", "all"]:
+        res_gsvgd = [0] * len(eff_dims)
+        def run_gsvgd(eff_dims):
+            for i, eff_dim in enumerate(eff_dims):
+                print(f"Running GSVGD with eff dim = {eff_dim}")
 
-            # m = dim // eff_dim if args.m is None else args.m
-            print("number of projections:", m)
+                m = min(20, dim // eff_dim) if args.m is None else args.m
+                print("number of projections:", m)
 
-            # sample from variational density
-            x_init_gsvgd = x_init.clone()
-            x_gsvgd = x_init_gsvgd.clone()
+                # sample from variational density
+                x_init_gsvgd = x_init.clone()
+                x_gsvgd = x_init_gsvgd.clone()
 
-            # kernel_gsvgd = RBF(method="med_heuristic")
-            kernel_gsvgd = BatchKernel(method="med_heuristic")
-            optimizer = optim.Adam([x_gsvgd], lr=lr_gsvgd)
-            manifold = Grassmann(dim, eff_dim)
-            U = torch.eye(dim).requires_grad_().to(device)
-            U = U[:, :(m*eff_dim)]
-            # U = torch.nn.init.orthogonal_(
-            #     torch.empty(dim, m*eff_dim)
-            # ).requires_grad_(True).to(device)
+                kernel_gsvgd = BatchKernel(method="med_heuristic")
+                optimizer = optim.Adam([x_gsvgd], lr=lr_gsvgd)
+                manifold = Grassmann(dim, eff_dim)
+                U = torch.eye(dim).requires_grad_().to(device)
+                U = U[:, :(m*eff_dim)]
 
-            gsvgd = FullGSVGDBatch(
-                target=distribution,
-                kernel=kernel_gsvgd,
-                manifold=manifold,
-                optimizer=optimizer,
-                delta=delta,
-                T=T,
-                device=device
-            )
-            start = time.time()
-            U, metric_gsvgd = gsvgd.fit(x_gsvgd, U, m, epochs, 
-                verbose=True, save_every=save_every, threshold=0.0001*m)
-            elapsed_time = time.time() - start
+                gsvgd = FullGSVGDBatch(
+                    target=distribution,
+                    kernel=kernel_gsvgd,
+                    manifold=manifold,
+                    optimizer=optimizer,
+                    delta=delta,
+                    T=T,
+                    device=device
+                )
+                start = time.time()
+                U, metric_gsvgd = gsvgd.fit(x_gsvgd, U, m, epochs, 
+                    verbose=True, save_every=save_every, threshold=0.0001*m)
+                elapsed_time = time.time() - start
 
-            # plot particles
-            fig_gsvgd = plot_particles(
-                x_init_gsvgd.detach(), 
-                x_gsvgd.detach(), 
-                distribution, 
-                d=6.0, 
-                step=0.1, 
-                concat=means[2:],
-                savedir=results_folder + f"/fullgsvgd_effdim{eff_dim}_lr{lr_gsvgd}_delta{delta}_m{m}_T{T}.png"
-            )
+                # plot particles
+                fig_gsvgd = plot_particles(
+                    x_init_gsvgd.detach(), 
+                    x_gsvgd.detach(), 
+                    distribution, 
+                    d=6.0, 
+                    step=0.1, 
+                    concat=means[2:],
+                    savedir=results_folder + f"/fullgsvgd_effdim{eff_dim}_lr{lr_gsvgd}_delta{delta}_m{m}_T{T}.png"
+                )
 
-            # store results
-            res_gsvgd[i] = {"init":x_init_gsvgd, "final":x_gsvgd, "metric":metric_gsvgd, 
-                "fig":fig_gsvgd, "particles":gsvgd.particles, "pam":gsvgd.pam, "res": gsvgd,
-                "elapsed_time": elapsed_time}
-        return res_gsvgd
+                # store results
+                res_gsvgd[i] = {"init":x_init_gsvgd, "final":x_gsvgd, "metric":metric_gsvgd, 
+                    "fig":fig_gsvgd, "particles":gsvgd.particles, "pam":gsvgd.pam, "res": gsvgd,
+                    "elapsed_time": elapsed_time}
+            return res_gsvgd
 
-    res_gsvgd = run_gsvgd(eff_dims)
-
+        res_gsvgd = run_gsvgd(eff_dims)
 
     ## S-SVGD
-    print("Running S-SVGD")
-    # sample from variational density
-    x_init_s_svgd = x_init.clone()
-    x_s_svgd = x_init_s_svgd.clone().requires_grad_()
-    s_svgd = SlicedSVGD(distribution, device=device)
+    if args.method in ["S-SVGD", "all"]:
+        print("Running S-SVGD")
+        # sample from variational density
+        x_init_s_svgd = x_init.clone()
+        x_s_svgd = x_init_s_svgd.clone().requires_grad_()
+        s_svgd = SlicedSVGD(distribution, device=device)
 
-    start = time.time()
-    x_s_svgd, metric_s_svgd = s_svgd.fit(
-        samples=x_s_svgd, 
-        n_epoch=epochs, 
-        lr=args.lr_g,
-        eps=lr,
-        save_every=save_every
-    )
-    elapsed_time_s_svgd = time.time() - start
+        start = time.time()
+        x_s_svgd, metric_s_svgd = s_svgd.fit(
+            samples=x_s_svgd, 
+            n_epoch=epochs, 
+            lr=args.lr_g,
+            eps=lr,
+            save_every=save_every
+        )
+        elapsed_time_s_svgd = time.time() - start
 
-    # plot particles
-    fig_s_svgd = plot_particles(
-        x_init_s_svgd.detach(), 
-        x_s_svgd.detach(), 
-        distribution, 
-        d=6.0, 
-        step=0.1, 
-        concat=means[2:],
-        savedir=results_folder + f"/ssvgd_lr{lr}_lrg{args.lr_g}.png"
-    )
+        # plot particles
+        fig_s_svgd = plot_particles(
+            x_init_s_svgd.detach(), 
+            x_s_svgd.detach(), 
+            distribution, 
+            d=6.0, 
+            step=0.1, 
+            concat=means[2:],
+            savedir=results_folder + f"/ssvgd_lr{lr}_lrg{args.lr_g}.png"
+        )
 
 
     ## save results and figs

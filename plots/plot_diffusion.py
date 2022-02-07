@@ -1,5 +1,4 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,5,7,2,3,6,1"
 import matplotlib.pyplot as plt 
 import seaborn as sns
 import pickle
@@ -9,8 +8,7 @@ import torch
 from src.diffusion import Diffusion
 import argparse
 
-# device = torch.device("cuda")
-device = "cuda:5"
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser(description='Plotting metrics.')
 parser.add_argument('--exp', type=str, help='Experiment to run')
@@ -18,7 +16,9 @@ parser.add_argument('--root', type=str, default="res", help='Root dir for result
 parser.add_argument('--nparticles', type=int, default=100, help='Num of particles')
 parser.add_argument('--dim', type=int, default=100, help='Num of particles')
 parser.add_argument('--epochs', type=int, default=1000, help='Num of epochs')
-parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
+parser.add_argument('--lr_svgd', type=float, default=0.001, help='learning rate')
+parser.add_argument('--lr_ssvgd', type=float, default=0.001, help='learning rate')
+parser.add_argument('--lr_gsvgd', type=float, default=0.001, help='learning rate')
 parser.add_argument('--lr_g', type=float, default=0.01, help='learning rate for g')
 parser.add_argument('--delta', type=float, help='stepsize for projections')
 parser.add_argument('--noise', type=str, default="True", help='noise')
@@ -26,16 +26,17 @@ parser.add_argument('--format', type=str, default="png", help='format of figs')
 args = parser.parse_args()
 dim = args.dim
 nparticles = args.nparticles
-lr = args.lr
+lr_svgd = args.lr_svgd
+lr_ssvgd = args.lr_ssvgd
+lr_gsvgd = args.lr_gsvgd
 noise = "_noise" if args.noise=="True" else ""
 
 basedir = f"{args.root}/{args.exp}"
-resdir = f"rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim{dim}"
-resdir_svgd = f"rbf_epoch{args.epochs}_lr{lr}_delta0.1_n{nparticles}_dim{dim}"
-# resdir_ssvgd = f"rbf_epoch{args.epochs}_lr{lr}_delta0.1_n{nparticles}_dim{dim}"
-# resdir_svgd = f"rbf_epoch{args.epochs}_lr0.01_delta0.1_n{nparticles}_dim{dim}"
-resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.01_delta0.1_n{nparticles}_dim{dim}"
+resdir = f"rbf_epoch{args.epochs}_lr{lr_gsvgd}_delta{args.delta}_n{nparticles}_dim{dim}"
+resdir_svgd = f"rbf_epoch{args.epochs}_lr{lr_svgd}_delta0.1_n{nparticles}_dim{dim}"
+resdir_ssvgd = f"rbf_epoch{args.epochs}_lr{lr_ssvgd}_delta0.1_n{nparticles}_dim{dim}"
 
+eff_dims = [1, 10, 20] # projector ranks m to plot
 seeds = range(1)
 
 if __name__ == "__main__":
@@ -53,21 +54,11 @@ if __name__ == "__main__":
     method_ls = [svgd_res, ssvgd_res]
     method_names = ["SVGD", "S-SVGD"]
 
-    eff_dims = [1, 10, 20]
     gsvgd_show = "GSVGD1"
     for eff_dim in eff_dims:
       gsvgd_res = pickle.load(open(f"{path}/particles_gsvgd_effdim{eff_dim}.p", "rb"))
       method_ls.append(gsvgd_res)
       method_names.append(f"GSVGD{eff_dim}")
-    
-    # add initial particles
-    # method_names = ["Initial"] + method_names
-    # initial = {
-    #   "u_true": svgd_res["u_true"],
-    #   "x_true": svgd_res["x_true"],
-    #   "particles": [svgd_res["particles"][0]]
-    # }
-    # method_ls = [initial] + method_ls
 
     # hmc samples
     hmc_res["particles"] = [torch.Tensor(hmc_res["particles"])]
@@ -75,9 +66,9 @@ if __name__ == "__main__":
     method_ls = [hmc_res] + method_ls
         
     # load target distribution
-    target_dist = torch.load(f'{path}/target_dist.p', map_location=device)
+    target_dist = torch.load(f"{path}/target_dist.p", map_location=device)
 
-    subplot_c = 3 # int(np.ceil(np.sqrt(len(method_ls))))
+    subplot_c = 3
     subplot_r = int(np.ceil(len(method_ls) / subplot_c))
 
     fig = plt.figure(figsize=(subplot_c*6, subplot_r*5))
@@ -135,27 +126,13 @@ if __name__ == "__main__":
 
       # plot observations
       plt.subplot(subplot_r, subplot_c, i+1)
-      # plt.scatter(
-      #   time_step[target_dist.loc.cpu().numpy()],
-      #   target_dist.obs.cpu().numpy(),
-      #   color="red",
-      #   s=2*len(method_names)
-      # )
-      # obs_df = pd.DataFrame(
-      #   {"time": time_step[target_dist.loc.cpu().numpy()],
-      #    "solution": target_dist.obs.cpu().squeeze().numpy(),
-      #   }
-      # )
       sns.lineplot(
-        # data=obs_df,
-        # x="time",
-        # y="solution",
         x=time_step[target_dist.loc.cpu().numpy()],
         y=target_dist.obs.cpu().squeeze().numpy(),
         color="red",
-        # join=False,
         linestyle="",
-        marker="o"
+        marker="o",
+        markersize=18,
       )
 
       # plot solutions
@@ -165,33 +142,27 @@ if __name__ == "__main__":
         y="particles", 
         hue="method", 
         style="method", 
-        # markers=True,
-        # markersize=8,
-        # alpha=1,
-        ci=None
+        ci=None,
+        linewidth=3,
       )
 
-      # plt.fill_between(data=df.loc[(df.method==method_name) & (df.time!=0.95)], 
       plt.fill_between(data=df.loc[df.method==method_name], 
         x="time", y1="lower", y2="upper", alpha=0.2)
-      plt.title(method_name, fontsize=20)
+      plt.title(method_name, fontsize=42)
       plt.xlim(0, 1)
-      plt.ylim(-1.8, 0.1)
-      plt.xlabel("Time Steps", fontsize=25)
-      plt.xticks(fontsize=20)
-      plt.ylabel("Solution", fontsize=25)
-      plt.yticks(fontsize=20)
+      plt.ylim(-1.75, 0.35)
+      plt.xlabel("Time Steps", fontsize=38)
+      plt.xticks(fontsize=26)
+      plt.ylabel("Solution", fontsize=42)
+      plt.yticks(fontsize=26)
       if i < subplot_c:
         g.set(xticks=[])
         plt.xlabel(None)
       if i != 0 and i != subplot_c:
-        # g.set(yticks=[])
         plt.ylabel(None)
-      if i == 2:
-        plt.legend(bbox_to_anchor=(0.4, 1.3), loc="upper center", borderaxespad=0., 
-          fontsize=20, labels=["Data", "Mean", "True"], ncol=3)
-        # plt.legend(bbox_to_anchor=(1.05, 0.9), loc="upper left", borderaxespad=0., 
-        #   fontsize=25, labels=["Data", "Mean", "True"])
+      if i == 0:
+        plt.legend(loc="upper center", borderaxespad=0., 
+          fontsize=25, labels=["Data", "Mean", "True"])
       else:
         plt.legend([],[], frameon=False)
       fig.tight_layout()
@@ -210,8 +181,6 @@ if __name__ == "__main__":
         y="particles", 
         hue="method", 
         style="method", 
-        # markers=True,
-        # markersize=8,
         alpha=1,
         ci=None
       )
@@ -228,8 +197,6 @@ if __name__ == "__main__":
       sub_df_all = sub_df_all.sort_values(["method", "time"]).reset_index(drop=True)
       plt.fill_between(data=sub_df_all,
         x="time", y1="lower", y2="upper", alpha=0.2, color=col)
-    # g.set_yscale("log")
-    # g.set_xscale("log")
     plt.xlabel("Time Steps", fontsize=25)
     plt.xticks(fontsize=20)
     plt.ylabel("Solution", fontsize=25)
@@ -300,8 +267,6 @@ if __name__ == "__main__":
         y="particles", 
         hue="method", 
         style="method", 
-        # markers=True,
-        # markersize=8,
         alpha=1,
         ci=None
       )
@@ -312,8 +277,6 @@ if __name__ == "__main__":
         color="red",
         s=2*len(method_names)
       )
-      # g.set_yscale("log")
-      # g.set_xscale("log")
       plt.title(method_name, fontsize=20)
       plt.xlabel("Time Steps", fontsize=25)
       plt.xticks(fontsize=20)
@@ -337,8 +300,6 @@ if __name__ == "__main__":
       y="particles", 
       hue="method", 
       style="method", 
-      # markers=True,
-      # markersize=8,
       alpha=1,
       ci=None
     )
@@ -353,8 +314,6 @@ if __name__ == "__main__":
       sub_df_all = sub_df_all.sort_values(["method", "time"]).reset_index(drop=True)
       plt.fill_between(data=sub_df_all,
         x="time", y1="lower", y2="upper", alpha=0.2, color=col)
-    # g.set_yscale("log")
-    # g.set_xscale("log")
     plt.xlabel("Time Steps", fontsize=25)
     plt.xticks(fontsize=20)
     plt.ylabel("Samples", fontsize=25)
@@ -367,5 +326,3 @@ if __name__ == "__main__":
 
       
     print(f"Saved to {resdir}/particles.pdf")
-
-    

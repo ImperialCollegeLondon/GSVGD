@@ -1,5 +1,4 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,2,3,4,5,6,7"
 import matplotlib.pyplot as plt 
 import seaborn as sns
 import pickle
@@ -10,7 +9,7 @@ from src.metrics import Metric
 from src.diffusion import Diffusion
 import argparse
 
-device = "cuda:5"
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser(description='Plotting metrics.')
 parser.add_argument('--exp', type=str, help='Experiment to run')
@@ -18,7 +17,9 @@ parser.add_argument('--root', type=str, default="res", help='Root dir for result
 parser.add_argument('--nparticles', type=int, default=100, help='Num of particles')
 parser.add_argument('--dim', type=int, default=100, help='Num of particles')
 parser.add_argument('--epochs', type=int, default=1000, help='Num of epochs')
-parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
+parser.add_argument('--lr_svgd', type=float, default=0.001, help='learning rate')
+parser.add_argument('--lr_ssvgd', type=float, default=0.001, help='learning rate')
+parser.add_argument('--lr_gsvgd', type=float, default=0.001, help='learning rate')
 parser.add_argument('--lr_g', type=float, default=0.01, help='learning rate for g')
 parser.add_argument('--delta', type=float, help='stepsize for projections')
 parser.add_argument('--noise', type=str, default="True", help='noise')
@@ -26,14 +27,15 @@ parser.add_argument('--format', type=str, default="png", help='format of figs')
 args = parser.parse_args()
 dim = args.dim
 nparticles = args.nparticles
-lr = args.lr
+lr_svgd = args.lr_svgd
+lr_ssvgd = args.lr_ssvgd
+lr_gsvgd = args.lr_gsvgd
 noise = "_noise" if args.noise=="True" else ""
 
 basedir = f"{args.root}/{args.exp}"
-resdir = f"rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim{dim}"
-resdir_svgd = f"rbf_epoch{args.epochs}_lr{lr}_delta0.1_n{nparticles}_dim{dim}"
-resdir_ssvgd = f"rbf_epoch{args.epochs}_lr{lr}_delta0.1_n{nparticles}_dim{dim}"
-# resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.01_delta0.1_n{nparticles}_dim{dim}"
+resdir = f"rbf_epoch{args.epochs}_lr{lr_gsvgd}_delta{args.delta}_n{nparticles}_dim{dim}"
+resdir_svgd = f"rbf_epoch{args.epochs}_lr{lr_svgd}_delta0.1_n{nparticles}_dim{dim}"
+resdir_ssvgd = f"rbf_epoch{args.epochs}_lr{lr_ssvgd}_delta0.1_n{nparticles}_dim{dim}"
 
 seeds = range(20)
 eff_dims = [1, 2, 5] + [i for i in range(10, 110, 10)]
@@ -69,16 +71,16 @@ if __name__ == "__main__":
     hmc_res["particles"] = [torch.Tensor(hmc_res["particles"])]
         
     # load target distribution
-    target_dist = torch.load(f'{path}/target_dist.p', map_location=device)
+    target_dist = torch.load(f"{path}/target_dist.p", map_location=device)
     target_dist.device = device
 
-    subplot_c = 3 # int(np.ceil(np.sqrt(len(method_ls))))
+    subplot_c = 3
     subplot_r = int(np.ceil(len(method_ls) / subplot_c))
 
     fig = plt.figure(figsize=(subplot_c*5, subplot_r*5))
 
     ## plot solutions
-    # get HMC solution
+    # get HMC solutiondevice
     hmc_particles = hmc_res["particles"][-1].to(target_dist.device)
     hmc_sol_particles = target_dist.solution(hmc_particles).cpu().numpy()
     
@@ -126,46 +128,24 @@ if __name__ == "__main__":
   # append all dataframes
   df = pd.concat(df_ls)
 
-  ## sd
-  # for method_name in ["S-SVGD"]:
-  #   for eff_dim in eff_dims:
-  #     cond = (df.method == method_name) & (df.eff_dim == eff_dim)
-  #     mean = np.mean(df.loc[cond, "energy"])
-  #     std = np.std(df.loc[cond, "energy"])
-  #     df.loc[cond, "lower"] = mean - 1.96*std/np.sqrt(len(seeds))
-  #     df.loc[cond, "upper"] = mean + 1.96*std/np.sqrt(len(seeds))
-
-  ## print for sanity check
-  # for eff_dim in eff_dims:
-  #   print(eff_dim, df.loc[df.eff_dim == eff_dim, "energy"].mean())
-
-  fig = plt.figure(figsize=(12, 6))
+  ## plot
+  fig = plt.figure(figsize=(10, 6))
   g = sns.lineplot(
     data=df,
     x="eff_dim", 
     y="energy", 
     hue="method",
     markers=True,
-    markersize=8,
+    markersize=18,
     # alpha=1,
     ci="sd"
   )
-
-  ## sd
-  # print(df.loc[df.method=="S-SVGD", ["lower", "upper"]])
-  # plt.fill_between(data=df.loc[df.method=="S-SVGD"], 
-  #   x="eff_dim", y1="lower", y2="upper", alpha=0.2)
-
-  plt.xlabel("Projection Dimensions", fontsize=25)
-  plt.xticks(fontsize=20)
-  plt.ylabel("Energy Distance", fontsize=25)
-  plt.yticks(fontsize=20)
-  plt.legend(fontsize=25, markerscale=2, bbox_to_anchor=(1.01, 1.0), loc='upper left')
+  plt.xlabel("Projection Dimensions", fontsize=38)
+  plt.xticks(fontsize=32)
+  plt.ylabel("Energy Distance", fontsize=38)
+  plt.yticks(fontsize=32)
+  plt.legend(fontsize=28, markerscale=2, bbox_to_anchor=(0.95, 0.7), loc='upper right')
   fig.tight_layout()
 
   fig.savefig(f"{basedir}/{resdir}/solution_effdim.png")
   fig.savefig(f"{basedir}/{resdir}/solution_effdim.pdf")
-
-
-
-    

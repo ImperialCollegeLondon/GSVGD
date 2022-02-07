@@ -1,6 +1,5 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "5,1,4,3,7"
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 import seaborn as sns
 import pickle
 import numpy as np
@@ -9,9 +8,11 @@ import torch
 import argparse
 from geomloss import SamplesLoss
 
+def cov_mat(x):
+  """Compute the (dim, dim) sample cov matrix of a Tensor of shape (n, dim)"""
+  return np.cov(x.T)
 
-device = torch.device("cuda")
-# device = "cuda:5"
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser(description='Plotting metrics.')
 parser.add_argument('--exp', type=str, help='Experiment to run')
@@ -32,11 +33,12 @@ noise = "_noise" if args.noise=="True" else ""
 
 basedir = f"{args.root}/{args.exp}"
 resdir = f"rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}"
-resdir_svgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.01_n{nparticles}"
-resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.01_n{nparticles}"
+resdir_svgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.1_n{nparticles}"
+resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.1_n{nparticles}"
 resdir_hmc = resdir
 
-seeds = range(10)
+eff_dims = [1, 2, 5, 10, 20, 30, 40, 50, 55] # projector ranks to show
+seeds = range(5)
 
 if __name__ == "__main__":
 
@@ -44,7 +46,7 @@ if __name__ == "__main__":
   for seed in seeds:
     path = f"{basedir}/{resdir}/seed{seed}"
     path_svgd = f"{basedir}/{resdir_svgd}/seed{seed}"
-    path_ssvgd = f"{basedir}/{resdir_svgd}/seed{seed}"
+    path_ssvgd = f"{basedir}/{resdir_ssvgd}/seed{seed}"
     path_hmc = f"{basedir}/{resdir_hmc}/seed{seed}"
 
     # load results
@@ -52,26 +54,24 @@ if __name__ == "__main__":
     ssvgd_res = pickle.load(open(f"{path_ssvgd}/particles_s-svgd_lrg{args.lr_g}.p", "rb"))
     hmc_res = pickle.load(open(f"{path_hmc}/particles_hmc.p", "rb"))
     particles_hmc = hmc_res["particles"].cpu()
-    cov_hmc = np.cov(particles_hmc.T) # cov matrix
+    cov_hmc = cov_mat(particles_hmc)
     
     method_ls = [svgd_res, ssvgd_res]
     method_names = ["SVGD", "S-SVGD"]
 
-    eff_dims = [1, 2, 5, 10, 20, 30, 40, 50]
     for eff_dim in eff_dims:
       gsvgd_res = pickle.load(open(f"{path}/particles_gsvgd_effdim{eff_dim}.p", "rb"))
       method_ls.append(gsvgd_res)
       method_names.append(f"GSVGD{eff_dim}")
         
     # load target distribution
-    target_dist = torch.load(f'{path}/target_dist.p', map_location=device)
+    target_dist = torch.load(f"{path}/target_dist.p", map_location=device)
     data = torch.load(f'{path}/data.p', map_location=device)
     _, _, acc_hmc, _ = target_dist.evaluation(particles_hmc, data["X_test"].cpu(), data["y_test"].cpu())
     print("HMC test accuracy:", acc_hmc)
 
-    subplot_c = 3 # int(np.ceil(np.sqrt(len(method_ls))))
+    subplot_c = 3
     subplot_r = int(np.ceil(len(method_ls) / subplot_c))
-
 
     ## plot solutions
     for i, (res, method_name) in enumerate(zip(method_ls, method_names)):
@@ -87,13 +87,9 @@ if __name__ == "__main__":
       energy_dist = energy(particles_hmc, particles).item()
 
       # cov matrix
-      cov_matrix = np.cov(particles.T)
+      cov_matrix = cov_mat(particles)
       l2_dist = np.sqrt(np.sum((cov_matrix - cov_hmc)**2))
       l2_diag_dist = np.sqrt(np.sum(np.diag(cov_matrix - cov_hmc)**2))
-      # if method_name in ["SVGD", "S-SVGD"]:
-      #   print(method_name)
-      #   print(np.diag(cov_matrix))
-      #   print(np.diag(cov_hmc))
 
       if not "GSVGD" in method_name:
         rep = len(eff_dims)
@@ -130,7 +126,7 @@ if __name__ == "__main__":
         df.loc[cond, "upper"] = mean + 1.96*std/np.sqrt(len(seeds))
         
     # plot observations
-    fig = plt.figure(figsize=(12, 8))
+    fig = plt.figure(figsize=(10, 6))
     g = sns.lineplot(
       data=df,
       x="eff_dim",
@@ -144,12 +140,12 @@ if __name__ == "__main__":
       plt.fill_between(data=df.loc[df.method==method_name], 
         x="eff_dim", y1="lower", y2="upper", alpha=0.2)
 
-    plt.xlabel("Projection Dimension", fontsize=40)
-    plt.xticks(fontsize=35)
-    ylab_fontsize = 40 # if metric == "Covariance Error" else 40
+    plt.xlabel("Projection Dimension", fontsize=38)
+    plt.xticks(fontsize=32)
+    ylab_fontsize = 38
     plt.ylabel(metric, fontsize=ylab_fontsize)
-    plt.yticks(fontsize=35)
-    plt.legend(fontsize=30)
+    plt.yticks(fontsize=32)
+    plt.legend(fontsize=28, loc="center right")
     fig.tight_layout()
 
     fig_name = f"{basedir}/{resdir}/{metric}"

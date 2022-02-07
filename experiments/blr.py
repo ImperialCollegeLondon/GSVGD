@@ -23,7 +23,7 @@ parser.add_argument("--effdim", type=int, default=-1, help="dimension")
 parser.add_argument("--lr", type=float, default=0.001, help="learning rate")
 parser.add_argument("--lr_g", type=float, default=0.001, help="learning rate for S-SVGD")
 parser.add_argument(
-    "--delta", type=float, default=0.01, help="stepsize for projections"
+    "--delta", type=float, default=0.1, help="stepsize for projections"
 )
 parser.add_argument(
     "--T", type=float, default=1e-4, help="noise multiplier for projections"
@@ -39,6 +39,7 @@ parser.add_argument("--data", type=str, default="covertype", help="which dataset
 parser.add_argument("--batch", type=int, default=100, help="batch size")
 parser.add_argument("--method", type=str, default="svgd", help="svgd, gsvgd or s-svgd")
 parser.add_argument("--save_every", type=int, default=10, help="save results per xxx epoch")
+parser.add_argument("--subsample_size", type=int, default=0, help="HMCECS subsample size")
 
 args = parser.parse_args()
 lr = args.lr
@@ -56,7 +57,6 @@ print(f"Running for lr: {lr}, nparticles: {nparticles}")
 
 device = torch.device(f"cuda:{args.gpu}" if args.gpu != -1 else "cuda")
 
-
 results_folder = f"./res/blr{args.suffix}/{args.kernel}_epoch{epochs}_lr{lr}_delta{delta}_n{nparticles}"
 results_folder = f"{results_folder}/seed{seed}"
 
@@ -66,8 +66,6 @@ if not os.path.exists(results_folder):
 if args.kernel == "rbf":
     Kernel = RBF
     BatchKernel = BatchRBF
-# elif args.kernel == "imq":
-#     Kernel = IMQ
 
 if __name__ == "__main__":
     print(f"Device: {device}")
@@ -87,52 +85,10 @@ if __name__ == "__main__":
 
         X_input = data["covtype"][:, 1:]
         y_input = data["covtype"][:, :1]
-        nsubsample = 1000 # 10000
+        nsubsample = 1000
         ind = np.random.choice(X_input.shape[0], nsubsample, replace=False)
         X_input, y_input = X_input[ind, :], y_input[ind, :]
         y_input[y_input == 2] = -1
-
-    elif args.data == "debug":
-        X_input = torch.randn(100, 2)
-        y_input = ((1.5 * X_input[:, 0] + 0.5 * X_input[:, 1] - 0) > 0)
-        y_input = y_input.reshape((X_input.shape[0], 1)).type(torch.float32)
-        y_input[y_input == 0] = -1.
-
-    elif args.data == "arcene":
-        data = scipy.io.loadmat("./data/arcene.mat")
-        X_input = data["X"] / 1000.
-        y_input = data["labels"] * 1.
-
-    elif args.data == "benchmarks":
-        # high-dim datasets:
-        # german, image, ringnorm, splice, twonorm, waveform, breast_cancer, flare_solar
-        data = scipy.io.loadmat("./data/benchmarks.mat")
-
-        data = data[args.data][0][0]
-        X_input = data[0]
-        y_input = data[1]
-
-        # check format of labels
-        assert (y_input.min(), y_input.max()) == (-1, 1), "range of y is not (-1, 1)"
-    
-    elif args.data == "sonar":
-        data = pd.read_csv("data/sonar.csv")
-        y_input = data.Class
-        y_input.replace({"Rock": -1, "Mine": 1}, inplace=True)
-        y_input = np.array(y_input, dtype=np.float32).reshape((-1, 1))
-        data.drop("Class", axis=1, inplace=True)
-        X_input = np.array(data)
-
-    elif args.data == "higgs":
-        from numpyro.examples.datasets import HIGGS, load_dataset
-        _, fetch = load_dataset(
-            HIGGS, shuffle=False, num_datapoints=1000
-        )
-        data, obs = fetch()
-        X_input = np.array(data, dtype=np.float32)
-        y_input = np.array(obs, dtype=np.float32)
-        y_input[y_input == 0] = -1.
-
 
     # load data into datasets
     N = X_input.shape[0]
@@ -141,19 +97,12 @@ if __name__ == "__main__":
 
     # split the dataset into training and testing
     if args.data in ["arcene", "debug"]:
-        # X_train = X_input[:100, :]
-        # y_train = y_input[:100, :]
-        # X_test = X_input[100:, :]
-        # y_test = y_input[100:, :]
         X_train, X_test, y_train, y_test = train_test_split(
             X_input, y_input, test_size=0.2, random_state=seed
         )
         X_train, X_valid, y_train, y_valid = train_test_split(
             X_train, y_train, test_size=0.2, random_state=seed
         )
-        #! hard coded
-        # X_valid = X_test
-        # y_valid = y_test
         print("train prevalence:", (y_train == 1).sum() / y_train.shape[0])
         print("valid prevalence:", (y_valid == 1).sum() / y_valid.shape[0])
 
@@ -184,7 +133,7 @@ if __name__ == "__main__":
 
 
     ## target density
-    a0, b0 = 1.0, 0.01  # hyper-parameters
+    a0, b0 = 1.0, 0.01 # hyper-parameters
     distribution = BayesianLR(X_train, y_train, a0, b0)
 
     # initialization
@@ -226,11 +175,9 @@ if __name__ == "__main__":
         kernel_gsvgd = BatchKernel(method="med_heuristic")
         optimizer = optim.Adam([x_gsvgd], lr=lr)
         manifold = Grassmann(D, eff_dim)
-        U = torch.eye(D).requires_grad_(True).to(device)
-        U = U[:, :(m*eff_dim)]
-        # U = torch.nn.init.orthogonal_(
-        #     torch.empty(D, m*eff_dim)
-        # ).requires_grad_(True).to(device)
+        U = torch.nn.init.orthogonal_(
+            torch.empty(D, m*eff_dim)
+        ).requires_grad_(True).to(device)
 
         gsvgd = FullGSVGDBatchLR(
             target=distribution,
@@ -277,46 +224,75 @@ if __name__ == "__main__":
 
     elif args.method == "hmc":
         import numpyro
-        from numpyro.infer import MCMC, NUTS
+        from numpyro.infer import MCMC, NUTS, HMCECS
         import numpyro.distributions as npr_dist
         import jax.random as random
         import jax.numpy as jnp
 
-        def model(Y, X):
+        def model(Y, X, subsample_size=None):
             _, dim = X.shape
             alpha = numpyro.sample("alpha", npr_dist.Gamma(a0, b0))
             mean = jnp.zeros(dim)
             var = 1 / alpha * jnp.ones(dim)
             w = numpyro.sample("w", npr_dist.Normal(mean, var))
-            logits = X @ w
-            numpyro.sample(
-                "Y", npr_dist.Bernoulli(logits=logits), obs=Y
-            )
 
-        def run_inference(model, rng_key, Y, X, a0, b0, dim):
-            kernel = NUTS(model)
+            with numpyro.plate("N", X.shape[0], subsample_size=subsample_size) as idx:
+                logits = X[idx] @ w
+                numpyro.sample(
+                    "Y", npr_dist.Bernoulli(logits=logits), obs=Y[idx]
+                )
+
+        def run_inference(model, rng_key, Y, X, a0, b0, dim, subsample_size):
+            if subsample_size == None:
+                print("Sampler: HMC")
+                kernel = NUTS(model)
+            else:
+                print(f"Sampler: HMCECS with subsample size = {subsample_size}")
+                inner_kernel = NUTS(model)
+                svi_key, mcmc_key = random.split(rng_key)
+
+                # find reference parameters for second order taylor expansion to estimate likelihood (taylor_proxy)
+                optimizer = numpyro.optim.Adam(step_size=1e-3)
+                guide = numpyro.infer.autoguide.AutoDelta(model)
+                svi = numpyro.infer.SVI(model, guide, optimizer, loss=numpyro.infer.Trace_ELBO())
+                svi_result = svi.run(svi_key, 20000, Y, X, subsample_size)
+                params, losses = svi_result.params, svi_result.losses
+                ref_params = {"alpha": params["alpha_auto_loc"], "w": params["w_auto_loc"]}
+
+                # taylor proxy estimates log likelihood (ll) by
+                # taylor_expansion(ll, theta_curr) +
+                #     sum_{i in subsample} ll_i(theta_curr) - taylor_expansion(ll_i, theta_curr) around ref_params
+                proxy = HMCECS.taylor_proxy(ref_params)
+                kernel = HMCECS(inner_kernel, num_blocks=100, proxy=proxy)
+
+            thinning = 20
             mcmc = MCMC(
                 kernel,
-                num_warmup=10000,
-                num_samples=1000,
+                num_warmup=20000,
+                num_samples=10000 * thinning,
                 num_chains=1,
+                thinning=thinning,
                 progress_bar=True,
             )
             start = time.time()
-            mcmc.run(rng_key, Y, X)
+            mcmc.run(rng_key, Y, X, subsample_size)
             elapsed_time = time.time() - start
             mcmc.print_summary()
             print("\nMCMC elapsed time:", elapsed_time)
-            return mcmc.get_samples(), elapsed_time
+            return mcmc.get_samples(), elapsed_time, mcmc
 
+        
+        # set random seeds for HMC
         rng_key, rng_key_predict = random.split(random.PRNGKey(0))
         Y = jnp.array(y_train.cpu()).reshape((-1,))
+        Y = Y.at[Y == -1].set(0.) # change labels from {-1, 1} to {0, 1}
         X = jnp.array(X_train.cpu())
-        # change labels from {-1, 1} to {0, 1}
-        Y = Y.at[Y == -1].set(0.)
-        print(jnp.unique(Y))
         print("shape of input data to NUTS:", X.shape, "\nD:", D)
-        particles_dict, elapsed_time = run_inference(model, rng_key, Y, X, a0, b0, D-1)
+        print("To be saved to:", results_folder + f"/particles_hmc.p")
+        
+        subsample_size = None if args.subsample_size == 0 else args.subsample_size
+        particles_dict, elapsed_time, hmc_res = run_inference(
+            model, rng_key, Y, X, a0, b0, D-1, subsample_size=subsample_size)
         theta = np.hstack([particles_dict["w"], particles_dict["alpha"].reshape((-1, 1))])
         theta = torch.Tensor(theta).to(device)
         print("shape of results:", theta.shape)

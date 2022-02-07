@@ -1,5 +1,4 @@
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,2,4,5,6,7"
 import matplotlib.pyplot as plt 
 import seaborn as sns
 import pickle
@@ -31,7 +30,6 @@ met = args.metric
 
 metrics_ylabs = {
   "energy": "Energy Distance", 
-  "energy2": "Energy Distance", 
   "mean": "MSE", 
   "squared": "MSE", 
   "cos": "MSE",
@@ -47,16 +45,7 @@ metrics_ylabs = {
 
 basedir = f"{args.root}/{args.exp}"
 resdirs = [
-  # f"{args.kernel}_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim10",
-  # f"{args.kernel}_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim20",
-  # f"{args.kernel}_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim30",
-  # f"{args.kernel}_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim40",
   f"{args.kernel}_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim50",
-  # f"{args.kernel}_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim60",
-  # f"{args.kernel}_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim70",
-  # f"{args.kernel}_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim80",
-  # f"{args.kernel}_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim90",
-  # f"{args.kernel}_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim100",
 ]
 seed_list = range(20)
 
@@ -74,17 +63,16 @@ if __name__ == "__main__":
       eff_dims = res["effdims"]
       epochs = res["epochs"]
 
-      target, svgd, s_svgd = res["target"], res["svgd"], res["maxsvgd"]
+      target, svgd, s_svgd = res["target"], res["svgd"], res["s_svgd"]
       gsvgd = {s: res[s] for s in [f"gsvgd_effdim{d}" for d in eff_dims]}
-      # save last particles in list
-      dim = svgd[-1].shape[1]
-      
+
+      dim = svgd[-1].shape[1]      
       epochs = res["epochs"]
 
-      target_dist = torch.load(f'{path}/target_dist.p', map_location=device)
+      target_dist = torch.load(f"{path}/target_dist.p", map_location=device)
       target = target_dist.sample((20000,))
 
-      #? save dataset used to compute metric
+      # save particles used to compute metric
       particles_dic = {
         "epochs": epochs,
         "SVGD": svgd,
@@ -165,21 +153,6 @@ if __name__ == "__main__":
     metrics_df = pd.concat(df_list)
     metrics_df = metrics_df.reset_index(drop=True)
 
-    # # 90%-CI (wrong!)
-    # metrics_df["lower"] = np.nan
-    # metrics_df["upper"] = np.nan
-    # for method in method_names:
-    #   for t in epochs:
-    #     select_ind = (metrics_df.method == method) & (metrics_df.epochs == t)
-    #     subdf = metrics_df[select_ind]
-    #     std = subdf.std() / np.sqrt(len(seed_list))
-    #     mean = subdf.mean()
-    #     metrics_df.loc[select_ind, "lower"] = mean - 1.96*std
-    #     metrics_df.loc[select_ind, "upper"] = mean + 1.96*std
-
-
-    # fig = plt.figure(figsize=(10, 6))
-    # metrics_df = metrics_df.loc[metrics_df.method != "SVGD"]
     fig = plt.figure(figsize=(12, 8))
     g = sns.lineplot(
       data=metrics_df, 
@@ -189,14 +162,7 @@ if __name__ == "__main__":
       style="method", 
       markers=True,
       markersize=14,
-      # ci=68
     )
-
-    # # plot 90%-CI (wrong!)
-    # for method in method_names:
-    #   sub_metrics_df = metrics_df.loc[metrics_df.method == method]
-    #   sub_metrics_df = sub_metrics_df.sort_values(["method", "epochs"]).reset_index(drop=True)
-    #   plt.fill_between(data=sub_metrics_df, x="epochs", y1="lower", y2="upper", alpha=0.2)
 
     g.set_yscale("log")
     plt.xlabel("Iterations", fontsize=38)
@@ -214,12 +180,3 @@ if __name__ == "__main__":
     metrics_df.to_csv(f"{save_path}/{met}.csv", index=False)
 
     print(f"Saved to {save_path}")
-
-    
-  
-
-            
-    
-    
-    
-
