@@ -34,3 +34,28 @@ sh scripts/run_diffusion.sh
 ```python
 python -m pytest
 ```
+
+## Code directory
+
+    .
+    |
+    └── README.md
+    ├───├requirements.txt: Dependencies.
+    ├───├setup.py: Setup script.
+    ├───├data: covertype data.
+    ├───├experiments: main scripts for the 5 numerical experiments.
+    ├───├plots: folder to hold plots.
+    ├───├scripts: Shell scripts to run the experiments and generate plots.
+    ├───├src: Source files for implementing each sampling method, and util functions for experiments.
+        ├───├Sliced_KSD_Clean: Utils for Sliced SVGD adapted from Wenbo Gong.
+        ├───├blr.py: Utils for Bayesian logistic regression.
+        ├───├diffusion.py: Utils for conditioned duffition.
+        ├───├gsvgd.py: GSVGD class (main).
+        ├───├kernel.py: Kernel class.
+        ├───├manifold.py: Class for optimisation on the Grassmann manifold, adapted from Pymanopt
+        ├───├metrics.py: Metric class for evaluation of results.
+        ├───├s_svgd.py: S-SVGD class, adapted from Wenbo Gong.
+        ├───├svgd.py: SVGD class.
+        ├───├utils.py: Other utils.
+    ├───├tests: unittests
+    ├───├thumbnail: Thumbnail fig.
