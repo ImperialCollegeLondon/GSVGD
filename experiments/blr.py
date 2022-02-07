@@ -90,48 +90,6 @@ if __name__ == "__main__":
         X_input, y_input = X_input[ind, :], y_input[ind, :]
         y_input[y_input == 2] = -1
 
-    elif args.data == "debug":
-        X_input = torch.randn(100, 2)
-        y_input = ((1.5 * X_input[:, 0] + 0.5 * X_input[:, 1] - 0) > 0)
-        y_input = y_input.reshape((X_input.shape[0], 1)).type(torch.float32)
-        y_input[y_input == 0] = -1.
-
-    elif args.data == "arcene":
-        data = scipy.io.loadmat("./data/arcene.mat")
-        X_input = data["X"] / 1000.
-        y_input = data["labels"] * 1.
-
-    elif args.data == "benchmarks":
-        # high-dim datasets:
-        # german, image, ringnorm, splice, twonorm, waveform, breast_cancer, flare_solar
-        data = scipy.io.loadmat("./data/benchmarks.mat")
-
-        data = data[args.data][0][0]
-        X_input = data[0]
-        y_input = data[1]
-
-        # check format of labels
-        assert (y_input.min(), y_input.max()) == (-1, 1), "range of y is not (-1, 1)"
-    
-    elif args.data == "sonar":
-        data = pd.read_csv("data/sonar.csv")
-        y_input = data.Class
-        y_input.replace({"Rock": -1, "Mine": 1}, inplace=True)
-        y_input = np.array(y_input, dtype=np.float32).reshape((-1, 1))
-        data.drop("Class", axis=1, inplace=True)
-        X_input = np.array(data)
-
-    elif args.data == "higgs":
-        from numpyro.examples.datasets import HIGGS, load_dataset
-        _, fetch = load_dataset(
-            HIGGS, shuffle=False, num_datapoints=1000
-        )
-        data, obs = fetch()
-        X_input = np.array(data, dtype=np.float32)
-        y_input = np.array(obs, dtype=np.float32)
-        y_input[y_input == 0] = -1.
-
-
     # load data into datasets
     N = X_input.shape[0]
     d = X_input.shape[1]
