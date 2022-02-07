@@ -33,10 +33,11 @@ noise = "_noise" if args.noise=="True" else ""
 
 basedir = f"{args.root}/{args.exp}"
 resdir = f"rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}"
-resdir_svgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.01_n{nparticles}"
-resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.01_n{nparticles}"
+resdir_svgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.1_n{nparticles}"
+resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.1_n{nparticles}"
 resdir_hmc = resdir
 
+eff_dims = [1, 2, 5, 10, 20, 30, 40, 50, 55] # projector ranks to show
 seeds = range(5)
 
 if __name__ == "__main__":
@@ -58,7 +59,6 @@ if __name__ == "__main__":
     method_ls = [svgd_res, ssvgd_res]
     method_names = ["SVGD", "S-SVGD"]
 
-    eff_dims = [1, 2, 5, 10, 20, 30, 40, 50, 55]
     for eff_dim in eff_dims:
       gsvgd_res = pickle.load(open(f"{path}/particles_gsvgd_effdim{eff_dim}.p", "rb"))
       method_ls.append(gsvgd_res)

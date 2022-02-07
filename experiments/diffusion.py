@@ -17,7 +17,7 @@ import time
 parser = argparse.ArgumentParser(description="Running xshaped experiment.")
 parser.add_argument("--dim", type=int, default=100, help="dimension")
 parser.add_argument("--effdim", type=int, default=-1, help="dimension")
-parser.add_argument("--lr", type=float, default=0.001, help="learning rate")
+parser.add_argument("--lr", type=float, default=0.1, help="learning rate")
 parser.add_argument("--lr_g", type=float, default=0.1, help="learning rate for S-SVGD")
 parser.add_argument(
     "--delta", type=float, default=0.1, help="stepsize for projections"

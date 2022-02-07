@@ -23,7 +23,7 @@ parser.add_argument("--effdim", type=int, default=-1, help="dimension")
 parser.add_argument("--lr", type=float, default=0.001, help="learning rate")
 parser.add_argument("--lr_g", type=float, default=0.001, help="learning rate for S-SVGD")
 parser.add_argument(
-    "--delta", type=float, default=0.01, help="stepsize for projections"
+    "--delta", type=float, default=0.1, help="stepsize for projections"
 )
 parser.add_argument(
     "--T", type=float, default=1e-4, help="noise multiplier for projections"

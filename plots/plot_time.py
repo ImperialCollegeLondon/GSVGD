@@ -40,10 +40,10 @@ if __name__ == "__main__":
     for dim in dims:
       print("loading dim =", dim)
       for nparticles in nparticles_ls:
-        ## load full GSVGD
+        ## load GSVGD with M = dim//m projectors
         resdir = f"rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim{dim}"
         path = f"{resdir}/seed0"
-        path = f"{basedir}/{path}"
+        path = f"{basedir}_full/{path}"
 
         # load results
         res = pickle.load(open(f"{path}/particles.p", "rb"))
@@ -76,9 +76,9 @@ if __name__ == "__main__":
           df_list.append(df_new)
       
 
-        ## load GSVGD with 20 projs
+        ## load GSVGD with M = min(20, dim//m) projectors
         path = f"{resdir}/seed0"
-        path = f"{basedir}20proj/{path}"
+        path = f"{basedir}/{path}"
 
         # load results
         res = pickle.load(open(f"{path}/particles.p", "rb"))
@@ -102,7 +102,6 @@ if __name__ == "__main__":
           df_list.append(df_new)
     
   metrics_df_orig = pd.concat(df_list)
-  print(metrics_df_orig.seed.unique())
 
   plot_methods = [f"SVGD-{n}" for n in nparticles_ls] + \
       [f"S-SVGD-{n}" for n in nparticles_ls] + \

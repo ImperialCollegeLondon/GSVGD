@@ -16,7 +16,9 @@ parser.add_argument('--root', type=str, default="res", help='Root dir for result
 parser.add_argument('--nparticles', type=int, default=100, help='Num of particles')
 parser.add_argument('--dim', type=int, default=100, help='Num of particles')
 parser.add_argument('--epochs', type=int, default=1000, help='Num of epochs')
-parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
+parser.add_argument('--lr_svgd', type=float, default=0.001, help='learning rate')
+parser.add_argument('--lr_ssvgd', type=float, default=0.001, help='learning rate')
+parser.add_argument('--lr_gsvgd', type=float, default=0.001, help='learning rate')
 parser.add_argument('--lr_g', type=float, default=0.01, help='learning rate for g')
 parser.add_argument('--delta', type=float, help='stepsize for projections')
 parser.add_argument('--noise', type=str, default="True", help='noise')
@@ -24,14 +26,17 @@ parser.add_argument('--format', type=str, default="png", help='format of figs')
 args = parser.parse_args()
 dim = args.dim
 nparticles = args.nparticles
-lr = args.lr
+lr_svgd = args.lr_svgd
+lr_ssvgd = args.lr_ssvgd
+lr_gsvgd = args.lr_gsvgd
 noise = "_noise" if args.noise=="True" else ""
 
 basedir = f"{args.root}/{args.exp}"
-resdir = f"rbf_epoch{args.epochs}_lr{lr}_delta{args.delta}_n{nparticles}_dim{dim}"
-resdir_svgd = f"rbf_epoch{args.epochs}_lr{lr}_delta0.1_n{nparticles}_dim{dim}"
-resdir_ssvgd = f"rbf_epoch{args.epochs}_lr{lr}_delta0.1_n{nparticles}_dim{dim}"
+resdir = f"rbf_epoch{args.epochs}_lr{lr_gsvgd}_delta{args.delta}_n{nparticles}_dim{dim}"
+resdir_svgd = f"rbf_epoch{args.epochs}_lr{lr_svgd}_delta0.1_n{nparticles}_dim{dim}"
+resdir_ssvgd = f"rbf_epoch{args.epochs}_lr{lr_ssvgd}_delta0.1_n{nparticles}_dim{dim}"
 
+eff_dims = [1, 10, 20] # projector ranks m to plot
 seeds = range(1)
 
 if __name__ == "__main__":
@@ -49,7 +54,6 @@ if __name__ == "__main__":
     method_ls = [svgd_res, ssvgd_res]
     method_names = ["SVGD", "S-SVGD"]
 
-    eff_dims = [1, 10, 20]
     gsvgd_show = "GSVGD1"
     for eff_dim in eff_dims:
       gsvgd_res = pickle.load(open(f"{path}/particles_gsvgd_effdim{eff_dim}.p", "rb"))

@@ -18,7 +18,6 @@ parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
 parser.add_argument('--delta', type=float, help='stepsize for projections')
 parser.add_argument('--noise', type=str, default="True", help='noise')
 parser.add_argument('--xlim', type=float, default=6, help='learning rate')
-parser.add_argument('--format', type=str, default="png", help='format of figs')
 parser.add_argument('--kernel', type=str, default="rbf", help='kernel')
 args = parser.parse_args()
 nparticles = args.nparticles
@@ -73,7 +72,7 @@ if __name__ == "__main__":
     subplot_c = int(np.ceil(np.sqrt(len(final_particles_dict))))
     subplot_r = int(np.ceil(len(final_particles_dict) / subplot_c))
 
-    dim1, dim2 = 1, 2
+    dim1, dim2 = 0, 1 # dimensions to plot
     fig = plt.figure(figsize=(subplot_c*3, subplot_r*3))
     for i, method in enumerate(method_names):
       x = final_particles_dict[method]
@@ -109,6 +108,7 @@ if __name__ == "__main__":
       plt.title(method, fontsize=22)
     
     fig.tight_layout()
-    fig.savefig(path + f"/final_particles.{args.format}", dpi=500)
+    fig.savefig(path + f"/final_particles.png", dpi=500)
+    fig.savefig(path + f"/final_particles.pdf")
 
     print(f"Saved to ", path + "/final_particles.png")
