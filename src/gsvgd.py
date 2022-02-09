@@ -6,7 +6,18 @@ import autograd.numpy as np
 
 
 class FullGSVGDBatch:
-    def __init__(self, target, kernel, optimizer, manifold, delta=0.1, T=1, device="cpu", noise=True):
+    def __init__(self, target, kernel, optimizer, manifold, delta=0.1, T=1e-4, device="cpu", noise=True):
+        """
+        Args:
+            target: [torch.distribution] must have `log_prob` method that evaluates the logprob 
+            of the target up to an additive constant
+            kernel: instance of kernel class
+            optimizer: [torch.optim.optimizer] optimizer for particle update
+            manifold: [Manifold] instance of manifold class for projectors update
+            delta: [float] stepsize for projector update
+            T: [float] initial temperature T0
+            device: [str or torch.device] GPU or CPU
+        """
         self.target = target
         self.k = kernel
         self.optim = optimizer
@@ -205,9 +216,18 @@ class FullGSVGDBatch:
 
         return A, phi, repulsion, score, K_AxAx
 
-    def fit(self, X, A, m, epochs=100, verbose=True, metric=None, save_every=100, threshold=0, **kwargs):
+    def fit(self, X, A, m, epochs=100, verbose=True, metric=None, save_every=100, threshold=None, **kwargs):
         '''Run GSVGD
         Args:
+            X: [torch.Tensor] initial particles.
+            A: [torch.Tensor] tensor of projectors of shape (dim, m x M), where
+                m = projection dimension, M = number of projectors.
+            epochs: number of iterations.
+            verbose: [bool] whether to print progress bar.
+            save_every: [int] save results for every "save_every" iterations
+            threshold: [float] if particle-averaged magnitude (PAM) of the difference
+                between the particles at present and previous time steps is larger
+                than "threshold", then increment the temperature by a factor of 10. 
             m: number of projection matrices.
         '''
         self.metrics = [0] * (epochs//save_every)
@@ -222,6 +242,8 @@ class FullGSVGDBatch:
         self.score_list = [0] * (epochs//save_every)
         self.k_list = [0] * (epochs//save_every)
         pam_old = 1e5
+
+        threshold = 1e-4 * m if threshold is None else threshold
 
         iterator = tqdm(range(epochs)) if verbose else range(epochs)
         
