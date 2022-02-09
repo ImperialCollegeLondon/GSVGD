@@ -14,8 +14,8 @@
 ## Run experiments
 The code below runs the numerical experiments in the paper. 
 
-1. The `.sh` scripts assume 8 GPUs are available. You can also CPUs by changing the arguments in these scripts to `--gpu=-1`.
-2. These experiments can take hours to finish.
+1. The `.sh` scripts assume 8 GPUs are available. You can also use CPUs by changing the `--gpu` argument in these scripts to `--gpu=-1`.
+2. Note: These experiments can take hours to finish.
 ```
 # install GSVGD module
 pip install .
@@ -31,8 +31,8 @@ sh scripts/run_diffusion.sh
 ```python
 '''
   distribution: target distribution class with `log_prob` method (up to a constant term)
-  kernel: kernel class
-  manifold: instance of Grassmann manifold class
+  kernel: instance of kernel class
+  manifold: instance of Grassmann manifold class for projector update
   optimizer: instance of optimizer class for particle update
   
   delta: stepsize for projector update
