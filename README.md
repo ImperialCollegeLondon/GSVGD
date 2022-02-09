@@ -27,6 +27,37 @@ sh scripts/run_gaussian.sh
 sh scripts/run_diffusion.sh
 ```
 
+## Basic usage
+```python
+'''
+  distribution: target distribution class with `log_prob` method (up to a constant term)
+  kernel: kernel class
+  manifold: instance of Grassmann manifold class
+  optimizer: instance of optimizer class for particle update
+  
+  delta: stepsize for projector update
+  T: initial temperature T0
+  X: initial particles
+  A: initial projectors
+  m: number of projectors
+  epochs: number of iterations
+'''
+# instantiate GSVGD class
+gsvgd = FullGSVGDBatch(
+    target=distribution,
+    kernel=kernel,
+    manifold=manifold,
+    optimizer=optimizer,
+    delta=delta,
+    T=T
+)
+
+# update particles
+_ = gsvgd.fit(X=X, A=A, m=m, epochs=epochs, threshold=0.0001*m)
+
+# final particles: X (updates are done in-place)
+```
+
 ## Run tests
 
 ```python
