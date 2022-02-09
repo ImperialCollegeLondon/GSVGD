@@ -122,7 +122,7 @@ if __name__ == "__main__":
   plt.xticks(fontsize=25)
   plt.ylabel("Variance", fontsize=30)
   plt.yticks(fontsize=25)
-  plt.legend(fontsize=25, markerscale=1.5, bbox_to_anchor=(0.3, 0.6))
+  plt.legend(fontsize=25, markerscale=1, bbox_to_anchor=(1, 0.5), loc='center left')
   fig.tight_layout()
   fig.savefig(f"{save_dir}/ablation.png")
   fig.savefig(f"{save_dir}/ablation.pdf")
