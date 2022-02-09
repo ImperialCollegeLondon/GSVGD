@@ -156,7 +156,7 @@ if __name__ == "__main__":
     if met == "var":
       plt.legend(fontsize=28, markerscale=2, bbox_to_anchor=(1, 0.4), loc='center right')
     else:
-      plt.legend(fontsize=28, markerscale=2, bbox_to_anchor=(0.95, 0.7), loc='upper right')
+      plt.legend(fontsize=28, markerscale=2)
     fig.tight_layout()
     fig.savefig(f"{save_dir}/{met}.png")
     fig.savefig(f"{save_dir}/{met}.pdf")

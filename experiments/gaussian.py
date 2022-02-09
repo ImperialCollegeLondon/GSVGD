@@ -109,7 +109,12 @@ if __name__ == "__main__":
             for i, eff_dim in enumerate(eff_dims):
                 print(f"Running GSVGD with eff dim = {eff_dim}")
 
-                m = min(20, dim // eff_dim) if args.m is None else args.m
+                if args.m is None:
+                    m = min(20, dim // eff_dim)
+                elif args.m == -1:
+                    m = dim // eff_dim
+                else:
+                    m = args.m
                 print("number of projections:", m)
 
                 # sample from variational density

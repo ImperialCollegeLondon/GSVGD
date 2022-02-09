@@ -37,8 +37,8 @@ resdir_svgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.1_n{nparticles}"
 resdir_ssvgd = f"rbf_epoch{args.epochs}_lr0.1_delta0.1_n{nparticles}"
 resdir_hmc = resdir
 
-eff_dims = [1, 2, 5, 10, 20, 30, 40, 50, 55] # projector ranks to show
-seeds = range(5)
+eff_dims = [1, 2, 5, 10, 20, 30, 40, 50] # projector ranks to show
+seeds = range(9)
 
 if __name__ == "__main__":
 
@@ -68,18 +68,16 @@ if __name__ == "__main__":
     target_dist = torch.load(f"{path}/target_dist.p", map_location=device)
     data = torch.load(f'{path}/data.p', map_location=device)
     _, _, acc_hmc, _ = target_dist.evaluation(particles_hmc, data["X_test"].cpu(), data["y_test"].cpu())
-    print("HMC test accuracy:", acc_hmc)
 
-    subplot_c = 3
-    subplot_r = int(np.ceil(len(method_ls) / subplot_c))
 
     ## plot solutions
+    subplot_c = 3
+    subplot_r = int(np.ceil(len(method_ls) / subplot_c))
     for i, (res, method_name) in enumerate(zip(method_ls, method_names)):
       print("Loading", method_name)
 
       particles = res["particles"][-1][1].cpu()
       _, _, acc, _ = target_dist.evaluation(particles, data["X_test"].cpu(), data["y_test"].cpu())
-      print(method_name, "test accuracy:", acc)
 
       # get distance for var
       # energy
