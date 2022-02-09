@@ -1,9 +1,9 @@
 ## conditioned diffucion
 epochs=1000
-nparticles=500
+nparticles=200
 delta=0.1
-lr_svgd=0.01
-lr_ssvgd=0.01
+lr_svgd=0.1
+lr_ssvgd=0.1
 lr_gsvgd=0.1
 
 ## run SVGD, S-SVGD and GSVGD
@@ -32,4 +32,3 @@ python plots/plot_diffusion.py --exp=diffusion --epochs=$epochs --nparticles=$np
  --lr_gsvgd=$lr_gsvgd --delta=$delta --dim=100 --lr_g=0.1
 python plots/plot_diffusion_dims.py --exp=diffusion --epochs=$epochs --nparticles=$nparticles  --lr_svgd=$lr_svgd  --lr_ssvgd=$lr_ssvgd\
  --lr_gsvgd=$lr_gsvgd --delta=$delta --dim=100 --lr_g=0.1
-

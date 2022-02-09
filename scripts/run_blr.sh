@@ -37,7 +37,7 @@ for seed in 0 1 2 3 4 5 6 7 8 9
   done
 
 ## reference HMC
-subsample_size=1000 # 0 for HMC; > 0 for HMCECS
+subsample_size=1000 # 0 for HMC; >0 for HMCECS
 for seed in 0 1 2 3 4 5 6 7 8 9
   do
     # HMC
