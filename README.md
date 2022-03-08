@@ -4,6 +4,8 @@
 
 [![Test](./thumbnail/summary.png)](./thumbnail/summary.png)
 
+[![Test](./imgs/gsvgd_cover.gif)](./imgs/gsvgd_cover.gif)
+
 ## Data
 `Covertype` data downloaded from https://archive.ics.uci.edu/ml/datasets/covertype
 
