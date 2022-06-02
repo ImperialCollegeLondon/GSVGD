@@ -1,5 +1,7 @@
 # GSVGD
 
+[[Paper](https://proceedings.mlr.press/v151/liu22a.html)][[Slides](https://docs.google.com/presentation/d/e/2PACX-1vTMmAQEaSB--eTTrg0xzZBdgdA3w530kw4ENg5Oh_a7YpCK4Gd28vc8tMPDMjarevyKjnNF4c1vEccG/pub?start=false&loop=false&delayms=3000)][[Poster](https://xinglliu.github.io/files/gsvgd_poster.pdf)]
+
 [![Test](https://github.com/harrisonzhu508/M-SVGD/actions/workflows/tests.yml/badge.svg)](https://github.com/harrisonzhu508/M-SVGD/actions/workflows/tests.yml)
 
 [![Test](./thumbnail/summary.png)](./thumbnail/summary.png)
