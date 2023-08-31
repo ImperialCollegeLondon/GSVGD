@@ -16,14 +16,17 @@
 - Code for optimization on Grassmann manifold is adapted from [Pymanopt](https://www.pymanopt.org/)
 
 ## Run experiments
-The code below runs the numerical experiments in the paper. 
+The code below provides an example of running the numerical experiments in the paper. 
+- The `.sh` scripts assume 8 GPUs are available. You can also use CPUs by changing the `--gpu` argument in these scripts to `--gpu=-1`.
+- Note: These experiments can take **several hours** to finish, since they encompass various configurations of dimensions/sample sizes, along with multiple repetitions. If you wish to obtain results faster, you can reduce the number of configurations accordingly in the `.sh` scripts.  
 
-1. The `.sh` scripts assume 8 GPUs are available. You can also use CPUs by changing the `--gpu` argument in these scripts to `--gpu=-1`.
-2. Note: These experiments can take hours to finish.
+To run:
+1. Install the GSVGD module 
 ```
-# install GSVGD module
-pip install .
-
+pip install -e .
+```
+2. Run experiments (the full experiments can take **several hours**)
+```
 # e.g.1 run multivariate gaussian experiment and generate plots
 sh scripts/run_gaussian.sh
 
