@@ -16,12 +16,16 @@
 ## Run experiments
 The code below runs the numerical experiments in the paper. 
 
-1. The `.sh` scripts assume 8 GPUs are available. You can also use CPUs by changing the `--gpu` argument in these scripts to `--gpu=-1`.
-2. Note: These experiments can take hours to finish.
-```
-# install GSVGD module
-pip install .
+- The `.sh` scripts assume 8 GPUs are available. You can also use CPUs by changing the `--gpu` argument in these scripts to `--gpu=-1`.
+- Note: These experiments can take hours to finish.
 
+To run:
+1. Install the GSVGD module 
+```
+pip install -e .
+```
+2. Run experiments (these can take several hours)
+```
 # e.g.1 run multivariate gaussian experiment and generate plots
 sh scripts/run_gaussian.sh
 
